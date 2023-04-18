@@ -1,22 +1,26 @@
 package util;
 
+import scpsolver.constraints.Constraint;
+import scpsolver.constraints.LinearBiggerThanEqualsConstraint;
+import scpsolver.constraints.LinearEqualsConstraint;
+import scpsolver.constraints.LinearSmallerThanEqualsConstraint;
+import scpsolver.lpsolver.LinearProgramSolver;
+import scpsolver.lpsolver.SolverFactory;
+import scpsolver.problems.LinearProgram;
+
 import java.util.ArrayList;
 import java.util.Locale;
 
-import scpsolver.constraints.*;
-import scpsolver.lpsolver.*;
-import scpsolver.problems.*;
 
-
-public class LinearProgramming {
+public class IteratedDomination {
 	static LinearProgram lp;
 	static double[] x;
-	
-	public LinearProgramming() {
+
+	public IteratedDomination() {
 	}
 	
 	
-	public static void setLP1() {
+	public static void setLP() {
 		double[] c = { 150.0, 175.0 };
         double[] b = {  77.0,  80.0,  9.0, 6.0 };
         double[][] A = {
