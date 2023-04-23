@@ -27,49 +27,112 @@ public class IteratedDomination {
 				transposed[i][j]=originalArray[j][i];
 			}
 		}
+		return transposed;
+	}
+
+	private static double[][] makeConstraints(double[][] utilityMatrix, int colRowNum){
+		double[][] A; // constraints left si
+//		if(player == 1)
+			A = new double[utilityMatrix.length - 1][utilityMatrix.length];
+//		else
+//			A = new double[utilityMatrix.length][utilityMatrix.length-1];
+		System.err.println("A.length is equal to: " + A.length);
+		for (int i=0; i < A.length; i++) {
+			for (int j=0; j < A[i].length; j++) {
+				if(colRowNum != i)
+					A[i][j] = utilityMatrix[i][j];
+			}
+		}
+
+		return A;
+
 	}
 	
 	// if P1, then colRowNum will be the row being checked
 	// if P2, then colRowNum will be the column being checked
 	public static void setLP(NormalFormGame game, int player, int colRowNum) {
-		double[] c = { 1.0, 1.0 };
-		double[] b;
-		double[][] A;
+		double[] c = { 1.0, 1.0 }; // Function MIN or MAX
+		double[] b = new double[0]; // Independent Factors
+		double[][] A = new double[0][0]; // constraints left side
 		if(player == 1) {
 			b = game.u1[colRowNum];    // constantes das constraints, que aqui vão ser as utilidades da linha/col checked
-			A = new double[game.u1.length - 1][game.u1.length];					// multipliers vão ser as utilities das outras linhas ou colunas
-			for (int i=0; i < A.length; i++) {
-				for (int j=0; j < A[i].length; j++) {
-					if(colRowNum == i)
-						A[i][j] = game.u1[i][j];
-				}
-			}
+			A = makeConstraints(game.u1, colRowNum);
 		}
 		if(player == 2) {
-			for(int i=0; i<game.u2.length; i++)
-				b[i] = game.u2[i][colRowNum];
-			A = new double[game.u2.length - 1][game.u2.length];
-			for (int i=0; i < A.length; i++) {
-				for (int j=0; j < A[i].length; j++) {
-					A[i][j] = game.u1[i][j];
-				}
-			}
+			b = game.u2[colRowNum];
+			// transpor game.u2
+			double[][] transposeG = transposeMatrix(game.u2);
+			// aplicar makeConstraints ao resultado
+			A = makeConstraints(transposeG, colRowNum);
 		}
         double[] lb = {0.0, 0.0};
 		lp = new LinearProgram(c);
 		lp.setMinProblem(false);
-		for (int i = 0; i<b.length; i++)
-			lp.addConstraint(new LinearBiggerThanEqualsConstraint(A[i], b[i], "c"+i));
-		lp.setLowerbound(lb);
-	}
-	
+		for (int i = 0; i < A.length - 1; i++) {
 
-	
+			lp.addConstraint(new LinearBiggerThanEqualsConstraint(A[i], b[i], "c" + i));
+		}
+		lp.setLowerbound(lb);
+
+	}
+
 	public static boolean solveLP() {
 		LinearProgramSolver solver  = SolverFactory.newDefault();  
 		x = solver.solve(lp);
 		if (x==null) return false;
 		return true;
+	}
+
+	public static boolean CheckIfDominated(NormalFormGame game, int player, int colRowNum){
+		setLP(game, player, colRowNum);
+		boolean hasSolution = solveLP();
+
+		if(!hasSolution) return false;
+
+		boolean isDominated = true;
+
+		for (int i = 0; i < x.length; i++) {
+
+			if(x[i] == 0)
+				isDominated = false;
+
+		}
+
+		if(isDominated){
+
+			if(player == 1){
+				game.pRow[colRowNum] = false;
+			}else{
+				game.pCol[colRowNum] = false;
+			}
+
+		}
+		return isDominated;
+	}
+
+	public static NormalFormGame IteratedDominationGame(NormalFormGame game){
+
+		boolean CanRemoveColRow = true;
+		boolean dominated = false;
+
+		while (CanRemoveColRow){
+
+			for(int i=0; i < game.nRow && !dominated; i++){
+				dominated = CheckIfDominated(game, 1, i);
+
+			}
+
+			for(int j = 0; j < game.nCol && !dominated; j++){
+
+				dominated = CheckIfDominated(game, 2, j);
+
+			}
+
+			if(!dominated)
+				CanRemoveColRow = false;
+
+		}
+		return game;
 	}
 	
 	public static void showSolution() {
@@ -127,7 +190,7 @@ public class IteratedDomination {
 	
 	
 	public static void main(String[] args) {
-		setLP1();
+		//setLP1();
 		showLP();
 		solveLP();
 		showSolution();
