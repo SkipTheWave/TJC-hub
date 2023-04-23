@@ -90,6 +90,7 @@ public class RandomIteratedDominationStrategy extends Strategy {
                 game = IteratedDomination.IteratedDominationGame(game);
                 game.showGame();         // simplified game
 
+                System.err.println("Random Strategy");
                 //random
                 Random rng = new Random();
 

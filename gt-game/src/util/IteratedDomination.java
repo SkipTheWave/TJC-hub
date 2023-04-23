@@ -101,7 +101,7 @@ public class IteratedDomination {
 	
 	
 	public static void main(String[] args) {
-		setLP1();
+		//setLP1();
 		showLP();  
 		solveLP();
 		showSolution();
