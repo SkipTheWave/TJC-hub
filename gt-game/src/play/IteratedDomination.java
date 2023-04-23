@@ -40,7 +40,7 @@ public class IteratedDomination {
 		for (int i=0; i < A.length; i++) {
 			for (int j=0; j < A[i].length; j++) {
 
-				if(colRowNum != i)
+				if(colRowNum != i && game.pCol[j] == true && game.pRow[i] == true)
 					A[i][j] = utilityMatrix[i][j];
 			}
 		}
@@ -87,12 +87,13 @@ public class IteratedDomination {
 		System.err.println("new LP");
 		lp = new LinearProgram(c);
 		lp.setMinProblem(false);
+		System.err.println("entrou ya");
 		for (int i = 0; i < A.length - 1; i++) {
 
 			lp.addConstraint(new LinearBiggerThanEqualsConstraint(A[i], b[i], "c" + i));
 		}
 		lp.setLowerbound(lb);
-
+		System.err.println("saiu ya");
 	}
 
 	public static boolean solveLP() {
@@ -112,16 +113,16 @@ public class IteratedDomination {
 
 		boolean isDominated = true;
 
+		double sum = 0;
+
 		for (int i = 0; i < x.length; i++) {
 
-			if(x[i] == 0)
-			{
-				System.err.println(" Sei la o qur " + x[i] );
-				isDominated = false;
-			}
+			sum += x[i];
 
 		}
-
+		if(sum >= 1) {
+			isDominated = false;
+		}
 		System.err.println( "IsDominated: " + isDominated);
 
 		if(isDominated){
