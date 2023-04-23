@@ -10,6 +10,7 @@ import scpsolver.lpsolver.SolverFactory;
 import scpsolver.problems.LinearProgram;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Locale;
 
 
@@ -37,12 +38,20 @@ public class IteratedDomination {
 //		else
 //			A = new double[utilityMatrix.length][utilityMatrix.length-1];
 
-		for (int i=0; i < A.length; i++) {
-			for (int j=0; j < A[i].length; j++) {
+		int aux1= 0;
 
-				if(colRowNum != i && game.pCol[j] == true && game.pRow[i] == true)
-					A[i][j] = utilityMatrix[i][j];
+		for (int i=0; i <= A.length; i++) {
+			int aux2 = 0;
+			for (int j = 0; j < game.nCol; j++) {
+
+				if (colRowNum != i && game.pCol[j] == true && game.pRow[i] == true) {
+					System.err.println("utility de i: " + i + " e j: " + j + " é " + utilityMatrix[i][j]);
+					System.err.println("aux 1 é: " + aux1 + " e aux2 é " + aux2);
+					A[aux1][aux2] = utilityMatrix[i][j];
+					aux2++;
+				}
 			}
+			if (colRowNum != i && game.pRow[i] == true) aux1++;
 		}
 
 		return A;
@@ -52,29 +61,22 @@ public class IteratedDomination {
 	// if P1, then colRowNum will be the row being checked
 	// if P2, then colRowNum will be the column being checked
 	public static void setLP(NormalFormGame game, int player, int colRowNum) {
+		double[] c = new double[0];
+		if(player == 1)
+			c = new double[game.nCol];
+		else // P2
+			c = new double[game.nRow];
 
-		/**double[] c = { 1.0, 1.0 }; // Function MIN or MAX
-		double[] b = new double[0]; // Independent Factors
-		double[][] A = new double[0][0]; // constraints left side
+		for (int i = 0; i < c.length; i++)
+			c[i] = 1.0;
 
-		b = game.u1[colRowNum];
-
-		A = new double[game.u1.length][game.u1.length];
-
-		for (int i=0; i < A.length; i++) {
-			for (int j=0; j < A[i].length; j++) {
-
-				if(colRowNum != j && game.pCol[j] == true && game.pRow[i] == true)
-					A[i][j] = game.u1[i][j];
-			}
-		}**/
-
-		double[] c = { 1.0, 1.0 }; // Function MIN or MAX
 		double[] b = new double[0]; // Independent Factors
 		double[][] A = new double[0][0]; // constraints left side
 		if(player == 1) {
 			b = game.u1[colRowNum];    // constantes das constraints, que aqui vão ser as utilidades da linha/col checked
 			A = makeConstraints(game.u1, colRowNum, game);
+			System.err.println("linhas de A: " + A.length);
+			System.err.println("colunas de A: " + A[0].length);
 		}
 		if(player == 2) {
 			b = game.u2[colRowNum];
@@ -86,9 +88,9 @@ public class IteratedDomination {
         double[] lb = {0.0, 0.0};
 		System.err.println("new LP");
 		lp = new LinearProgram(c);
-		lp.setMinProblem(false);
+		lp.setMinProblem(true); //yes
 		System.err.println("entrou ya");
-		for (int i = 0; i < A.length - 1; i++) {
+		for (int i = 0; i < A.length; i++) {
 
 			lp.addConstraint(new LinearBiggerThanEqualsConstraint(A[i], b[i], "c" + i));
 		}
@@ -105,7 +107,9 @@ public class IteratedDomination {
 
 	public static boolean CheckIfDominated(NormalFormGame game, int player, int colRowNum){
 		setLP(game, player, colRowNum);
+		showLP();
 		boolean hasSolution = solveLP();
+		showSolution();
 
 		System.err.println( "hasSolution: " + hasSolution);
 
