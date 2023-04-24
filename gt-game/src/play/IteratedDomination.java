@@ -22,12 +22,18 @@ public class IteratedDomination {
 	}
 
 	public static double[][] transposeMatrix(double[][] originalArray) {
-		double[][] transposed = new double[originalArray.length][originalArray[0].length];
-		for(int i=0;i< originalArray.length;i++){
-			for(int j=0;j< originalArray[i].length;j++){
-				transposed[i][j]=originalArray[j][i];
+
+		//given a matrix, compute the transpose
+
+		double[][] transposed = new double[originalArray[0].length][originalArray.length];
+		for (int i = 0; i < originalArray.length; i++)
+			for (int j = 0; j < originalArray[0].length; j++)
+			{
+				System.err.println("originalArray[i][j] é: " + originalArray[i][j]);
+				transposed[j][i] = originalArray[i][j];
+				System.err.println("transposed[j][i] é: " + transposed[j][i]);
 			}
-		}
+
 		return transposed;
 	}
 
@@ -51,8 +57,11 @@ public class IteratedDomination {
 					aux2++;
 				}
 			}
+			System.err.println("Valores de A: " + Arrays.toString(A[aux1]));
 			if (colRowNum != i && game.pRow[i] == true) aux1++;
 		}
+
+		
 
 		return A;
 
@@ -74,11 +83,14 @@ public class IteratedDomination {
 		double[][] A = new double[0][0]; // constraints left side
 		if(player == 1) {
 			b = game.u1[colRowNum];    // constantes das constraints, que aqui vão ser as utilidades da linha/col checked
+			System.err.println("Valores de B: " + Arrays.toString(b));
 			A = makeConstraints(game.u1, colRowNum, game);
 			System.err.println("linhas de A: " + A.length);
 			System.err.println("colunas de A: " + A[0].length);
+			A = transposeMatrix(A);
 		}
 		if(player == 2) {
+			System.err.println("player 2.---------------");
 			b = game.u2[colRowNum];
 			// transpor game.u2
 			double[][] transposeG = transposeMatrix(game.u2);
