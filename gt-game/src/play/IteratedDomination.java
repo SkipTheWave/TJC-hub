@@ -23,7 +23,6 @@ public class IteratedDomination {
 
     //Given a matrix, checks if there are negative numbers, if there are, sum the inverse to all numbers in the same row and column
     private static double checkNegativeNumbers(double[][] matrix) {
-        System.err.println(" Verificar se tem negativos");
         double min = Integer.MAX_VALUE;
         for (int i = 0; i < matrix.length; i++) {
             for (int j = 0; j < matrix[0].length; j++) {
@@ -32,7 +31,6 @@ public class IteratedDomination {
                     min = matrix[i][j];
             }
         }
-        System.err.println("min: " + min);
 
         return min;
     }
@@ -46,7 +44,6 @@ public class IteratedDomination {
                 matrix[i][j] += Math.abs(min);
             }
         }
-		System.err.println("matrix: " + Arrays.deepToString(matrix));
 
         return matrix;
     }
@@ -56,7 +53,6 @@ public class IteratedDomination {
         for (int i = 0; i < b.length; i++) {
             b[i] += Math.abs(min);
         }
-		System.err.println("b: " + Arrays.toString(b));
         return b;
     }
 
@@ -75,19 +71,14 @@ public class IteratedDomination {
     }
 
     private static double[][] makeConstraints(double[][] utilityMatrix, int colRowNum, NormalFormGame game) {
-        double[][] A; // constraints left si
-//		if(player == 1)
-        A = new double[utilityMatrix.length - 1][utilityMatrix.length];
-//		else
-//			A = new double[utilityMatrix.length][utilityMatrix.length-1];
+        double[][] A;
 
+        A = new double[utilityMatrix.length - 1][utilityMatrix[0].length];
 
         int aux1 = 0;
-
         for (int i = 0; i <= A.length; i++) {
             int aux2 = 0;
             for (int j = 0; j < game.nCol; j++) {
-
                 if (colRowNum != i && game.pCol[j] == true && game.pRow[i] == true) {
                     A[aux1][aux2] = utilityMatrix[i][j];
                     aux2++;
@@ -141,11 +132,17 @@ public class IteratedDomination {
             A = addAbsToA(A, min);
             b = addAbsToB(b, min);
         }
+        System.err.println("Original matrix: " + Arrays.deepToString(A));
         A = transposeMatrix(A);
-        double[] lb = {0.0, 0.0};
+        double[] lb = new double[count - 1];
+        for (int i = 0; i < lb.length; i++)
+            lb[i] = 0.0;
         lp = new LinearProgram(c);
         lp.setMinProblem(true);
-        System.err.println(Arrays.deepToString(A));
+        System.err.println("matrix: " + Arrays.deepToString(A));
+        System.err.println("Lower bound: " + Arrays.toString(lb));
+        System.err.println("b: " + Arrays.toString(b));
+        System.err.println("c: " + Arrays.toString(c));
         for (int i = 0; i < A.length; i++) {
 
             lp.addConstraint(new LinearBiggerThanEqualsConstraint(A[i], b[i], "c" + i));
