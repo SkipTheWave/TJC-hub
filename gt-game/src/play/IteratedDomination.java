@@ -72,8 +72,15 @@ public class IteratedDomination {
 
     private static double[][] makeConstraints(double[][] utilityMatrix, int colRowNum, NormalFormGame game) {
         double[][] A;
+        int lineCount = 0;
 
-        A = new double[utilityMatrix.length - 1][utilityMatrix[0].length];
+
+        for (int i = 0; i < utilityMatrix.length; i++) {
+                if (game.pRow[i] == true)
+                    lineCount++;
+        }
+
+        A = new double[lineCount - 1][utilityMatrix[0].length];
 
         int aux1 = 0;
         for (int i = 0; i <= A.length; i++) {
@@ -200,6 +207,7 @@ public class IteratedDomination {
 
         boolean CanRemoveColRow = true;
         boolean dominated;
+        int loopCount = 0;
 
         while (CanRemoveColRow) {
 
@@ -219,7 +227,7 @@ public class IteratedDomination {
                 System.err.println("Não há mais linhas/colunas dominadas");
                 CanRemoveColRow = false;
             }
-
+            loopCount++;
         }
         return game;
     }
