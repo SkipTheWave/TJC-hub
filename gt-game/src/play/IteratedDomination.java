@@ -26,13 +26,13 @@ public class IteratedDomination {
 		//given a matrix, compute the transpose
 
 		double[][] transposed = new double[originalArray[0].length][originalArray.length];
-		for (int i = 0; i < originalArray.length; i++)
-			for (int j = 0; j < originalArray[0].length; j++)
-			{
-				System.err.println("originalArray[i][j] é: " + originalArray[i][j]);
+		System.err.println("original array:\n" + Arrays.deepToString(originalArray));
+		for (int i = 0; i < originalArray.length; i++) {
+			for (int j = 0; j < originalArray[0].length; j++) {
 				transposed[j][i] = originalArray[i][j];
-				System.err.println("transposed[j][i] é: " + transposed[j][i]);
 			}
+			System.err.println("transposed so far:\n" + Arrays.deepToString(transposed));
+		}
 
 		return transposed;
 	}
@@ -43,6 +43,7 @@ public class IteratedDomination {
 			A = new double[utilityMatrix.length - 1][utilityMatrix.length];
 //		else
 //			A = new double[utilityMatrix.length][utilityMatrix.length-1];
+
 
 		int aux1= 0;
 
@@ -57,7 +58,6 @@ public class IteratedDomination {
 					aux2++;
 				}
 			}
-			System.err.println("Valores de A: " + Arrays.toString(A[aux1]));
 			if (colRowNum != i && game.pRow[i] == true) aux1++;
 		}
 
@@ -70,11 +70,21 @@ public class IteratedDomination {
 	// if P1, then colRowNum will be the row being checked
 	// if P2, then colRowNum will be the column being checked
 	public static void setLP(NormalFormGame game, int player, int colRowNum) {
-		double[] c = new double[0];
-		if(player == 1)
-			c = new double[game.nCol];
-		else // P2
-			c = new double[game.nRow];
+		double[] c;
+		int count = 0;
+		if(player == 1) {
+			for(int a = 0; a < game.pRow.length; a++) {
+				if (game.pRow[a])
+					count++;
+			}
+		}else {
+			for(int a = 0; a < game.pCol.length; a++){
+				if(game.pCol[a])
+					count++;
+			}
+		}
+
+		c = new double[count-1];
 
 		for (int i = 0; i < c.length; i++)
 			c[i] = 1.0;
@@ -87,7 +97,6 @@ public class IteratedDomination {
 			A = makeConstraints(game.u1, colRowNum, game);
 			System.err.println("linhas de A: " + A.length);
 			System.err.println("colunas de A: " + A[0].length);
-			A = transposeMatrix(A);
 		}
 		if(player == 2) {
 			System.err.println("player 2.---------------");
@@ -97,11 +106,11 @@ public class IteratedDomination {
 			// aplicar makeConstraints ao resultado
 			A = makeConstraints(transposeG, colRowNum, game);
 		}
+		A = transposeMatrix(A);
         double[] lb = {0.0, 0.0};
-		System.err.println("new LP");
 		lp = new LinearProgram(c);
 		lp.setMinProblem(true); //yes
-		System.err.println("entrou ya");
+		System.err.println(Arrays.deepToString(A));
 		for (int i = 0; i < A.length; i++) {
 
 			lp.addConstraint(new LinearBiggerThanEqualsConstraint(A[i], b[i], "c" + i));
@@ -119,6 +128,8 @@ public class IteratedDomination {
 
 	public static boolean CheckIfDominated(NormalFormGame game, int player, int colRowNum){
 		setLP(game, player, colRowNum);
+		if(lp.getC().length == 0)
+			return false;
 		showLP();
 		boolean hasSolution = solveLP();
 		showSolution();
@@ -142,7 +153,7 @@ public class IteratedDomination {
 		System.err.println( "IsDominated: " + isDominated);
 
 		if(isDominated){
-
+			System.err.println( "Chegou aqui");
 			if(player == 1){
 				game.pRow[colRowNum] = false;
 			}else{
