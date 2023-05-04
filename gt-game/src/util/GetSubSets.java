@@ -51,7 +51,7 @@ public class GetSubSets {
 
     public static void showSubSet(List<boolean[]> s) {
         int n = s.get(0).length;
-        boolean[] b = new boolean[n];
+        boolean[] b;
         for(int i=0;i<s.size();i++) {
             b = s.get(i);
             System.out.print("{");

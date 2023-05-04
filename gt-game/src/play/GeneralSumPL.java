@@ -1,4 +1,4 @@
-package util;
+package play;
 
 import scpsolver.constraints.Constraint;
 import scpsolver.constraints.LinearBiggerThanEqualsConstraint;
@@ -7,6 +7,7 @@ import scpsolver.constraints.LinearSmallerThanEqualsConstraint;
 import scpsolver.lpsolver.LinearProgramSolver;
 import scpsolver.lpsolver.SolverFactory;
 import scpsolver.problems.LinearProgram;
+import util.GetSubSets;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -54,26 +55,23 @@ public class GeneralSumPL {
 
         double[][] A = new double[sup1.length + sup2.length + 2][(numberSupport * 2) + 2];
 
-        String x = "";
-        for (int i = 0; i < sup1.length; i++) {
-            if (sup1[i])
-                x += "1 ";
+        StringBuilder x = new StringBuilder();
+        for (boolean value : sup1) {
+            if (value)
+                x.append("1 ");
             else
-                x += "0 ";
+                x.append("0 ");
         }
-        String y = "";
-        for (int i = 0; i < sup2.length; i++) {
-            if (sup2[i])
-                y += "1 ";
+        StringBuilder y = new StringBuilder();
+        for (boolean value : sup2) {
+            if (value)
+                y.append("1 ");
             else
-                y += "0 ";
+                y.append("0 ");
         }
         System.out.println("Test: X " + x + " Y " + y);
 
         double[] c = new double[A[0].length];
-        for (int i = 0; i < c.length; i++) {
-            c[i] = 0;
-        }
         double[] b = new double[A.length];
         for (int i = 0; i < b.length; i++) {
             if(i < b.length - 2)
@@ -82,18 +80,13 @@ public class GeneralSumPL {
                 b[i] = 1;
         }
         double[] lb = new double[A[0].length];
-        for (int i = 0; i < lb.length; i++) {
-            lb[i] = 0;
-        }
-
-
         //iterate A
         for (int i = 0; i < A.length; i++) {
             for (int j = 0; j < A[0].length; j++) {
 
                 A[i][j] = 0;
 
-                //Adiciona nas ultimas 2 linhas quantos supoortes tem
+                //Adiciona nas ultimas 2 linhas quantos suportes tem
                 if (i == A.length - 2 && j < numberSupport) {
                     A[i][j] = 1;
                 } else if (i == A.length - 1 && j >= numberSupport && j < numberSupport * 2) {
@@ -142,8 +135,7 @@ public class GeneralSumPL {
     public static boolean solveLP() {
         LinearProgramSolver solver = SolverFactory.newDefault();
         x = solver.solve(lp);
-        if (x == null) return false;
-        return true;
+        return x != null;
     }
 
     public static void showLP() {
@@ -198,19 +190,86 @@ public class GeneralSumPL {
         }
     }
 
+//    public static void showNashEquilibrium(boolean[] p1Supp, boolean[] p2Supp) {
+//        if (x == null) System.out.println("*********** NO NASH EQUILIBRIUM FOUND ***********");
+//        else {
+//            System.out.println("*********** NASH EQUILIBRIUM ***********");
+//
+//            int currAction = -1;
+//            for(int i=0; i < p1Supp.length; i++) {
+//                if(p1Supp[i] == true) {
+//                    currAction = i;
+//                    break;
+//                }
+//            }
+//
+//            for (int i = 0; i < x.length; i++)
+//                if(System.out.println("x[" + i + "] = " + x[i]);
+//            System.out.println("f(x) = " + lp.evaluate(x));
+//        }
+//    }
+
+    private static void ShowNE(boolean[] sup1, boolean[] sup2, NormalFormGame game){
+
+        System.out.println("Player 1 strategy: ");
+        for (int i = 0; i < sup1.length; i++) {
+            if(sup1[i])
+                System.out.println(x[i] + " : "+ game.rowActions.get(i));
+            else
+                System.out.println("0,00 : "+ game.rowActions.get(i));
+        }
+        System.out.println("Player 2 strategy: ");
+        for (int i = 0; i < sup2.length; i++) {
+            if(sup2[i])
+                System.out.println(x[i] + " : "+ game.colActions.get(i));
+            else
+                System.out.println("0,00 : "+ game.colActions.get(i));
+        }
+        System.out.println("f(x) = " + lp.evaluate(x));
+
+    }
+
+    static void CheckNegativeNumbers(NormalFormGame game){
+
+        double[][] u1 = game.u1;
+        double[][] u2 = game.u2;
+
+        double min = Integer.MIN_VALUE;
+        //check the lowest number in u1 and u2 and them sum the abs of that number to all if the number is negative
+        for (int i = 0; i < u1.length; i++) {
+            for (int j = 0; j < u1[0].length; j++) {
+                if (u1[i][j] < min && u1[i][j] < u2[i][j]) {
+                    min = u1[i][j];
+                }else if (u2[i][j] < min && u2[i][j] < u1[i][j]) {
+                    min = u2[i][j];
+                }
+            }
+        }
+        if(min>0)
+            return;
+
+        double absMin = Math.abs(min);
+        for (int i = 0; i < u1.length; i++) {
+            for (int j = 0; j < u1[0].length; j++) {
+                u1[i][j] += absMin;
+                u2[i][j] += absMin;
+            }
+        }
+
+
+    }
+
     private static void ReceiveSupports(int numberSupport, List<boolean[]> sup1, List<boolean[]> sup2, NormalFormGame game) {
 
-        System.out.println("--------------");
-        GetSubSets.showSubSet(sup1);
-        System.out.println("***********");
-        GetSubSets.showSubSet(sup2);
+       // CheckNegativeNumbers(game);
 
-        //TODO VER NUMEROS NEGATIVOS
-        for (int i = 0; i < sup1.size(); i++) {
-            for (int j = 0; j < sup2.size(); j++) {
-                ComputeGeneralSum(numberSupport, sup1.get(i), sup2.get(j), game);
+        int numberOfNE = 0;
+        for (boolean[] value : sup1) {
+            for (boolean[] booleans : sup2) {
+                ComputeGeneralSum(numberSupport, value, booleans, game);
                 boolean solutionFound = solveLP();
                 if (solutionFound) {
+                    numberOfNE++;
                     System.out.println("SOLUTION FOUND");
                     showLP();
                     showSolution();
@@ -231,12 +290,7 @@ public class GeneralSumPL {
         boolean[] iCol = new boolean[game.nCol];
         Arrays.fill(iCol, true);
 
-        int numberOfSupports = 0;
-        if (game.nRow > game.nCol) {
-            numberOfSupports = game.nCol;
-        } else {
-            numberOfSupports = game.nRow;
-        }
+        int numberOfSupports = Math.min(game.nRow, game.nCol);
 
         for (int i = 1; i <= numberOfSupports; i++) {
             System.out.println("Support " + i + " + " + i);
@@ -256,6 +310,16 @@ public class GeneralSumPL {
         // add actions to the game
         game.nRow = 2;
         game.nCol = 3;
+        //add actions to the game
+        game.rowActions = new ArrayList<>();
+        game.rowActions.add("A");
+        game.rowActions.add("B");
+
+        game.colActions = new ArrayList<>();
+        game.colActions.add("C");
+        game.colActions.add("D");
+        game.colActions.add("E");
+
         ComputeGame(game);
 
     }
