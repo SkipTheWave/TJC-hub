@@ -273,16 +273,18 @@ public class GeneralSumPL {
                     System.out.println("SOLUTION FOUND");
                     showLP();
                     showSolution();
+                    System.out.println("Nash Equilibrium #"+ numberOfNE);
+                    ShowNE(value, booleans, game);
+                    // UNCOMMENT LINE BELOW TO STOP AFTER NASH EQUILIBRIUM
+                    //return;
                 } else {
                     System.out.println("NO SOLUTION FOUND");
                 }
             }
         }
-
     }
 
     public static void ComputeGame(NormalFormGame game) {
-
 
         List<boolean[]> support, support2;
         boolean[] iRow = new boolean[game.nRow];
@@ -297,7 +299,6 @@ public class GeneralSumPL {
             support = GetSubSets.getSubSets(0, i, game.nRow, iRow);
             support2 = GetSubSets.getSubSets(0, i, game.nCol, iCol);
             ReceiveSupports(i, support, support2, game);
-
         }
 
     }
