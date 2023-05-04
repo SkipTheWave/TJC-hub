@@ -190,25 +190,6 @@ public class GeneralSumPL {
         }
     }
 
-//    public static void showNashEquilibrium(boolean[] p1Supp, boolean[] p2Supp) {
-//        if (x == null) System.out.println("*********** NO NASH EQUILIBRIUM FOUND ***********");
-//        else {
-//            System.out.println("*********** NASH EQUILIBRIUM ***********");
-//
-//            int currAction = -1;
-//            for(int i=0; i < p1Supp.length; i++) {
-//                if(p1Supp[i] == true) {
-//                    currAction = i;
-//                    break;
-//                }
-//            }
-//
-//            for (int i = 0; i < x.length; i++)
-//                if(System.out.println("x[" + i + "] = " + x[i]);
-//            System.out.println("f(x) = " + lp.evaluate(x));
-//        }
-//    }
-
     private static void ShowNE(boolean[] sup1, boolean[] sup2, NormalFormGame game){
 
         System.out.println("Player 1 strategy: ");
@@ -234,7 +215,7 @@ public class GeneralSumPL {
         double[][] u1 = game.u1;
         double[][] u2 = game.u2;
 
-        double min = Integer.MIN_VALUE;
+        double min = Integer.MAX_VALUE;
         //check the lowest number in u1 and u2 and them sum the abs of that number to all if the number is negative
         for (int i = 0; i < u1.length; i++) {
             for (int j = 0; j < u1[0].length; j++) {
@@ -256,12 +237,15 @@ public class GeneralSumPL {
             }
         }
 
+        game.u1 = u1;
+        game.u2 = u2;
+
 
     }
 
     private static void ReceiveSupports(int numberSupport, List<boolean[]> sup1, List<boolean[]> sup2, NormalFormGame game) {
 
-       // CheckNegativeNumbers(game);
+        CheckNegativeNumbers(game);
 
         int numberOfNE = 0;
         for (boolean[] value : sup1) {
@@ -307,7 +291,7 @@ public class GeneralSumPL {
         NormalFormGame game = new NormalFormGame();
         //create a prisioner dilema game
         game.u1 = new double[][]{{3, 0, 1}, {5, 1, 0}};
-        game.u2 = new double[][]{{3, 5, 6}, {0, 1, 2}};
+        game.u2 = new double[][]{{3, -5, 6}, {0, 1, 2}};
         // add actions to the game
         game.nRow = 2;
         game.nCol = 3;

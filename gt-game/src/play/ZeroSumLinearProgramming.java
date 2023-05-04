@@ -1,5 +1,6 @@
-package util;
+package play;
 
+import play.NormalFormGame;
 import scpsolver.constraints.Constraint;
 import scpsolver.constraints.LinearBiggerThanEqualsConstraint;
 import scpsolver.constraints.LinearEqualsConstraint;
@@ -20,24 +21,43 @@ public class ZeroSumLinearProgramming {
     }
 
 
-    public static void setLP1() {
-        double[] c = { 150.0, 175.0 };
-        double[] b = {  77.0,  80.0,  9.0, 6.0 };
-        double[][] A = {
-                {  7.0, 11.0 },
-                { 10.0,  8.0 },
-                {  1.0,  0.0 },
-                {  0.0,  1.0 },
-        };
-        double[] lb = {0.0, 0.0};
+    public static void setLP1(NormalFormGame game) {
+        double[][] A = new double[game.u2[0].length + 1][game.u2.length + 1];
+
+        // the constraints matrix will be P2's utility matrix, plus an extra column, plus an extra line
+        for(int i=0; i < A.length - 1; i++) {
+            for(int j=0; j < A[0].length - 1; j++) {
+                A[i][j] = game.u2[j][i];
+            }
+        }
+
+        // the extra column will be other player's utility * -1
+        for(int i=0; i < A.length; i++)
+            A[i][A[0].length - 1] = -1.0;
+
+        // the extra row will be all the actions
+        for(int j=0; j < A[0].length; j++) {
+            A[A.length - 1][j] = 1.0;
+        }
+
+        // the function to minimize will be simply the last variable: P1's utility
+        double[] c = new double[A[0].length];
+        Arrays.fill(c, 0.0);
+        c[c.length - 1] = 1.0;
+
+        double[] b = new double[A.length];
+        Arrays.fill(b, 0.0);
+        b[b.length - 1] = 1.0;
+
+        double[] lb = new double[c.length];
+        Arrays.fill(c, 0.0);
+        //double[] lb = {0.0, 0.0};
         lp = new LinearProgram(c);
         lp.setMinProblem(false);
         for (int i = 0; i<b.length; i++)
             lp.addConstraint(new LinearSmallerThanEqualsConstraint(A[i], b[i], "c"+i));
         lp.setLowerbound(lb);
     }
-
-
 
     public static boolean solveLP() {
         LinearProgramSolver solver  = SolverFactory.newDefault();
@@ -101,7 +121,7 @@ public class ZeroSumLinearProgramming {
 
 
     public static void main(String[] args) {
-        setLP1();
+        //setLP1();
         showLP();
         solveLP();
         showSolution();
