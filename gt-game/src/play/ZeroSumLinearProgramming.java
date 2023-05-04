@@ -10,6 +10,7 @@ import scpsolver.lpsolver.SolverFactory;
 import scpsolver.problems.LinearProgram;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Locale;
 
 public class ZeroSumLinearProgramming {
@@ -53,9 +54,10 @@ public class ZeroSumLinearProgramming {
         Arrays.fill(c, 0.0);
         //double[] lb = {0.0, 0.0};
         lp = new LinearProgram(c);
-        lp.setMinProblem(false);
-        for (int i = 0; i<b.length; i++)
+        lp.setMinProblem(true);
+        for (int i = 0; i<b.length - 1; i++)
             lp.addConstraint(new LinearSmallerThanEqualsConstraint(A[i], b[i], "c"+i));
+        lp.addConstraint(new LinearEqualsConstraint(A[A.length - 1], 1.0, "c"+(b.length - 1))); // nao percebo o ultimo argumento but should be this
         lp.setLowerbound(lb);
     }
 
