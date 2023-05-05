@@ -193,20 +193,25 @@ public class GeneralSumPL {
     private static void ShowNE(boolean[] sup1, boolean[] sup2, NormalFormGame game){
 
         System.out.println("Player 1 strategy: ");
+        int x_counter = 0;
         for (int i = 0; i < sup1.length; i++) {
-            if(sup1[i])
-                System.out.println(x[i] + " : "+ game.rowActions.get(i));
+            if(sup1[i]) {
+                System.out.println((Math.round(x[x_counter] * 100.0) / 100.0) + " : " + game.rowActions.get(i));
+                x_counter++;
+            }
             else
                 System.out.println("0,00 : "+ game.rowActions.get(i));
         }
         System.out.println("Player 2 strategy: ");
         for (int i = 0; i < sup2.length; i++) {
-            if(sup2[i])
-                System.out.println(x[i] + " : "+ game.colActions.get(i));
+            if(sup2[i]) {
+                System.out.println((Math.round(x[x_counter] * 100.0) / 100.0) + " : " + game.colActions.get(i));
+                x_counter++;
+            }
             else
                 System.out.println("0,00 : "+ game.colActions.get(i));
         }
-        System.out.println("f(x) = " + lp.evaluate(x));
+
 
     }
 
@@ -243,11 +248,10 @@ public class GeneralSumPL {
 
     }
 
-    private static void ReceiveSupports(int numberSupport, List<boolean[]> sup1, List<boolean[]> sup2, NormalFormGame game) {
+    private static int ReceiveSupports(int numberSupport, List<boolean[]> sup1, List<boolean[]> sup2, NormalFormGame game, int numberOfNE) {
 
         CheckNegativeNumbers(game);
 
-        int numberOfNE = 0;
         for (boolean[] value : sup1) {
             for (boolean[] booleans : sup2) {
                 ComputeGeneralSum(numberSupport, value, booleans, game);
@@ -255,17 +259,18 @@ public class GeneralSumPL {
                 if (solutionFound) {
                     numberOfNE++;
                     System.out.println("SOLUTION FOUND");
-                    showLP();
-                    showSolution();
+                    //showLP();
+                    //showSolution();
                     System.out.println("Nash Equilibrium #"+ numberOfNE);
                     ShowNE(value, booleans, game);
                     // UNCOMMENT LINE BELOW TO STOP AFTER NASH EQUILIBRIUM
-                    //return;
+                    //return -1;
                 } else {
                     System.out.println("NO SOLUTION FOUND");
                 }
             }
         }
+        return numberOfNE;
     }
 
     public static void ComputeGame(NormalFormGame game) {
@@ -277,33 +282,39 @@ public class GeneralSumPL {
         Arrays.fill(iCol, true);
 
         int numberOfSupports = Math.min(game.nRow, game.nCol);
-
+        int numberOfNE = 0;
         for (int i = 1; i <= numberOfSupports; i++) {
             System.out.println("Support " + i + " + " + i);
             support = GetSubSets.getSubSets(0, i, game.nRow, iRow);
             support2 = GetSubSets.getSubSets(0, i, game.nCol, iCol);
-            ReceiveSupports(i, support, support2, game);
+            int aux = ReceiveSupports(i, support, support2, game, numberOfNE);
+            if(aux == -1) return;
+            numberOfNE = aux;
         }
+        System.out.println("All solutions found: " + numberOfNE);
 
     }
 
     public static void main(String[] args) {
         NormalFormGame game = new NormalFormGame();
         //create a prisioner dilema game
-        game.u1 = new double[][]{{3, 0, 1}, {5, 1, 0}};
-        game.u2 = new double[][]{{3, -5, 6}, {0, 1, 2}};
+//        game.u1 = new double[][]{{3, 0, 1}, {5, 1, 0}, {2, 2, 2}};
+//        game.u2 = new double[][]{{3, -5, 6}, {0, 1, 2}, {1, 2, 3}};
+        game.u1 = new double[][]{{0, 0, 1}, {0, 2, 0}, {4, 0, 0}};
+        game.u2 = new double[][]{{0, 0, 2}, {3, 0, 0}, {0, 2, 0}};
         // add actions to the game
-        game.nRow = 2;
+        game.nRow = 3;
         game.nCol = 3;
         //add actions to the game
         game.rowActions = new ArrayList<>();
-        game.rowActions.add("A");
-        game.rowActions.add("B");
+        game.rowActions.add("a");
+        game.rowActions.add("b");
+        game.rowActions.add("c");
 
         game.colActions = new ArrayList<>();
+        game.colActions.add("A");
+        game.colActions.add("B");
         game.colActions.add("C");
-        game.colActions.add("D");
-        game.colActions.add("E");
 
         ComputeGame(game);
 

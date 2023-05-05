@@ -86,13 +86,11 @@ public class NEStrategy extends Strategy{
                 NormalFormGame game = new NormalFormGame(U1, U2, labelsP1, labelsP2);
                 game.showGame();
 
-                //computeNashEquilibrium(game, labelsP1, labelsP2, myStrategy);
-                //GeneralSumPL.ComputeGame(game, myStrategy);
+                GeneralSumPL.ComputeGame(game);
 
-//				double[] strategyP1 = setStrategy(1, labelsP1, myStrategy);
-//				double[] strategyP2 = setStrategy(2, labelsP2, myStrategy);
-//				showStrategy(1, strategyP1, labelsP1);
-//				showStrategy(2, strategyP2, labelsP2);
+                setStrategy(1, labelsP1, myStrategy);
+                setStrategy(2, labelsP2, myStrategy);
+
                 try {
                     this.provideStrategy(myStrategy);
                     playComplete = true;
@@ -134,6 +132,7 @@ public class NEStrategy extends Strategy{
         } else {        // if playing as player 2 then choose first or second action randomly
             strategy[0] = 0.5;
             strategy[1] = 0.5;
+            strategy[2] = 0;
         }
         for (int i = 0; i < n; i++) myStrategy.put(labels[i], strategy[i]);
         return strategy;
