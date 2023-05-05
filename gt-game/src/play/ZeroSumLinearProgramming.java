@@ -13,6 +13,8 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Locale;
 
+import static play.GeneralSumPL.CheckNegativeNumbers;
+
 public class ZeroSumLinearProgramming {
 
     static LinearProgram lp;
@@ -22,22 +24,26 @@ public class ZeroSumLinearProgramming {
     }
 
 
-    public static void setLP1(NormalFormGame game) {
-        double[][] A = new double[game.u2[0].length + 1][game.u2.length + 1];
+    public static void setLP1(int player, double[][] opponentUtilMatrix) {
 
-        // the constraints matrix will be P2's utility matrix, plus an extra column, plus an extra line
+        double[][] A = new double[opponentUtilMatrix[0].length + 1][opponentUtilMatrix.length + 1];
+
+        // the constraints matrix will be other player's utility matrix, plus an extra column, plus an extra line
         for(int i=0; i < A.length - 1; i++) {
             for(int j=0; j < A[0].length - 1; j++) {
-                A[i][j] = game.u2[j][i];
+                if(player == 1)
+                    A[i][j] = opponentUtilMatrix[j][i];
+                else
+                    A[i][j] = opponentUtilMatrix[i][j];
             }
         }
 
-        // the extra column will be other player's utility * -1
-        for(int i=0; i < A.length; i++)
+        // the extra column will represent current player's utility * -1
+        for(int i=0; i < A.length - 1; i++)
             A[i][A[0].length - 1] = -1.0;
 
         // the extra row will be all the actions
-        for(int j=0; j < A[0].length; j++) {
+        for(int j=0; j < A[0].length - 1; j++) {
             A[A.length - 1][j] = 1.0;
         }
 
@@ -51,8 +57,16 @@ public class ZeroSumLinearProgramming {
         b[b.length - 1] = 1.0;
 
         double[] lb = new double[c.length];
-        Arrays.fill(c, 0.0);
-        //double[] lb = {0.0, 0.0};
+        double min = Double.MAX_VALUE;
+        for (int i = 0; i < A.length; i++) {
+            for (int j = 0; j < A[i].length; j++) {
+                if (A[i][j] < min)
+                    min = A[i][j];
+            }
+        }
+        Arrays.fill(lb, 0.0);
+        lb[lb.length - 1] = min;
+
         lp = new LinearProgram(c);
         lp.setMinProblem(true);
         for (int i = 0; i<b.length - 1; i++)
@@ -120,14 +134,40 @@ public class ZeroSumLinearProgramming {
         }
     }
 
-
-
-    public static void main(String[] args) {
-        //setLP1();
+    public static void ComputeZeroSumNE(NormalFormGame game) {
+        //CheckNegativeNumbers(game);
+        System.out.println("********** PLAYER 1 STRATEGY **********");
+        setLP1(1, game.u2);
         showLP();
         solveLP();
         showSolution();
 
+        System.out.println("********** PLAYER 2 STRATEGY **********");
+        setLP1(2, game.u1);
+        showLP();
+        solveLP();
+        showSolution();
+    }
+
+    public static void main(String[] args) {
+        NormalFormGame game = new NormalFormGame();
+        game.u1 = new double[][]{{3, 2, 1}, {-5, -4, 0}, {2, 0, -2}};
+        game.u2 = new double[][]{{-3, -2, -1}, {5, 4, 0}, {-2, 0, 2}};
+        // add actions to the game
+        game.nRow = 3;
+        game.nCol = 3;
+        //add actions to the game
+        game.rowActions = new ArrayList<>();
+        game.rowActions.add("a");
+        game.rowActions.add("b");
+        game.rowActions.add("c");
+
+        game.colActions = new ArrayList<>();
+        game.colActions.add("A");
+        game.colActions.add("B");
+        game.colActions.add("C");
+
+        ComputeZeroSumNE(game);
     }
 
 }
