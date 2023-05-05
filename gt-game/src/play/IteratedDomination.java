@@ -1,6 +1,5 @@
 package play;
 
-import play.NormalFormGame;
 import scpsolver.constraints.Constraint;
 import scpsolver.constraints.LinearBiggerThanEqualsConstraint;
 import scpsolver.constraints.LinearEqualsConstraint;
@@ -21,18 +20,37 @@ public class IteratedDomination {
     public IteratedDomination() {
     }
 
-    //Given a matrix, checks if there are negative numbers, if there are, sum the inverse to all numbers in the same row and column
-    private static double checkNegativeNumbers(double[][] matrix) {
-        double min = Integer.MAX_VALUE;
-        for (int i = 0; i < matrix.length; i++) {
-            for (int j = 0; j < matrix[0].length; j++) {
+    static void CheckNegativeNumbers(NormalFormGame game){
 
-                if (matrix[i][j] < min)
-                    min = matrix[i][j];
+        double[][] u1 = game.u1;
+        double[][] u2 = game.u2;
+
+        double min = Integer.MAX_VALUE;
+        //check the lowest number in u1 and u2 and them sum the abs of that number to all if the number is negative
+        for (int i = 0; i < u1.length; i++) {
+            for (int j = 0; j < u1[0].length; j++) {
+                if (u1[i][j] < min && u1[i][j] < u2[i][j]) {
+                    min = u1[i][j];
+                }else if (u2[i][j] < min && u2[i][j] < u1[i][j]) {
+                    min = u2[i][j];
+                }
+            }
+        }
+        if(min>0)
+            return;
+
+        double absMin = Math.abs(min);
+        for (int i = 0; i < u1.length; i++) {
+            for (int j = 0; j < u1[0].length; j++) {
+                u1[i][j] += absMin;
+                u2[i][j] += absMin;
             }
         }
 
-        return min;
+        game.u1 = u1;
+        game.u2 = u2;
+
+
     }
 
     private static double[][] addAbsToA(double[][] originalMatrix, double min) {
@@ -74,24 +92,23 @@ public class IteratedDomination {
         double[][] A;
         int lineCount = 0;
 
-
         for (int i = 0; i < utilityMatrix.length; i++) {
-                if (game.pRow[i] == true)
+                if (game.pRow[i])
                     lineCount++;
         }
 
-        A = new double[lineCount - 1][utilityMatrix[0].length];
+        A = new double[utilityMatrix[0].length][lineCount - 1];
 
-        int aux1 = 0;
+        int aux1 = 0;//TODO
         for (int i = 0; i <= A.length; i++) {
             int aux2 = 0;
-            for (int j = 0; j < game.nCol; j++) {
-                if (colRowNum != i && game.pCol[j] == true && game.pRow[i] == true) {
+            for (int j = 0; j < A[0].length; j++) {
+                if (colRowNum != i && game.pCol[j] && game.pRow[i]) {
                     A[aux1][aux2] = utilityMatrix[i][j];
                     aux2++;
                 }
             }
-            if (colRowNum != i && game.pRow[i] == true) aux1++;
+            if (colRowNum != i && game.pRow[i]) aux1++;
         }
 
         return A;
@@ -117,8 +134,7 @@ public class IteratedDomination {
 
         c = new double[count - 1];
 
-        for (int i = 0; i < c.length; i++)
-            c[i] = 1.0;
+        Arrays.fill(c, 1.0);
 
         double[] b = new double[0]; // Independent Factors
         double[][] A = new double[0][0]; // constraints left side
@@ -134,16 +150,10 @@ public class IteratedDomination {
             // aplicar makeConstraints ao resultado
             A = makeConstraints(transposeG, colRowNum, game);
         }
-        double min = checkNegativeNumbers(A);
-        if (min < 0) {
-            A = addAbsToA(A, min);
-            b = addAbsToB(b, min);
-        }
+
         System.err.println("Original matrix: " + Arrays.deepToString(A));
         A = transposeMatrix(A);
         double[] lb = new double[count - 1];
-        for (int i = 0; i < lb.length; i++)
-            lb[i] = 0.0;
         lp = new LinearProgram(c);
         lp.setMinProblem(true);
         System.err.println("matrix: " + Arrays.deepToString(A));
@@ -160,8 +170,7 @@ public class IteratedDomination {
     public static boolean solveLP() {
         LinearProgramSolver solver = SolverFactory.newDefault();
         x = solver.solve(lp);
-        if (x == null) return false;
-        return true;
+        return x != null;
     }
 
     public static boolean CheckIfDominated(NormalFormGame game, int player, int colRowNum) {
@@ -180,9 +189,9 @@ public class IteratedDomination {
 
         double sum = 0;
 
-        for (int i = 0; i < x.length; i++) {
+        for (double v : x) {
 
-            sum += x[i];
+            sum += v;
 
         }
         if (sum >= 1) {
@@ -204,12 +213,13 @@ public class IteratedDomination {
 
     public static NormalFormGame IteratedDominationGame(NormalFormGame game) {
 
-
         boolean CanRemoveColRow = true;
         boolean dominated;
         int loopCount = 0;
 
-        while (CanRemoveColRow) {
+        CheckNegativeNumbers(game);
+
+        while (CanRemoveColRow && loopCount < 20) {
 
             dominated = false;
             for (int i = 0; i < game.nRow && !dominated; i++) {
@@ -287,9 +297,24 @@ public class IteratedDomination {
 
     public static void main(String[] args) {
         //setLP1();
-        showLP();
-        solveLP();
-        showSolution();
+//        showLP();
+//        solveLP();
+//        showSolution();
+
+        //create a game with this matrix for utility of player 1
+        int[][] A = {{-2, -1, -3, 3, 4}, {0, -4, 1, 0, -1}, {2, -1, 2, 2, -1}, {-1, -2, -3, 1, 0}, {-1, 1, 4, 0, 6}};
+        //create a game with this matrix for utility of player 2
+        int[][] B = {{0, 4, 0, -1, 2}, {2, -1, 4, -1, 1}, {3, 0, 3, 2, 1}, {-1, -1, 1, 4, 0}, {4, 1, 0, 1, 0}};
+        //create labels for the strategies of player 1
+        String[] labelsRow = {"A", "C", "B", "E", "D"};
+        //create labels for the strategies of player 2
+        String[] labelsCol = {"Z", "Y", "X", "W", "V"};
+        //create a game with the matrixes A and B and the labels for the strategies
+        NormalFormGame game = new NormalFormGame(A, B, labelsRow, labelsCol);
+
+        game = IteratedDominationGame(game);
+
+        game.showGame();
 
     }
 
