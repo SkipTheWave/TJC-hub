@@ -20,42 +20,41 @@ public class IteratedDomination {
     public IteratedDomination() {
     }
 
-    static void CheckNegativeNumbers(NormalFormGame game){
-
-        double[][] u1 = game.u1;
-        double[][] u2 = game.u2;
-
+    static double CheckNegativeNumbers(NormalFormGame game, int rowCol, int player) {
         double min = Integer.MAX_VALUE;
-        //check the lowest number in u1 and u2 and them sum the abs of that number to all if the number is negative
-        for (int i = 0; i < u1.length; i++) {
-            for (int j = 0; j < u1[0].length; j++) {
-                if (u1[i][j] < min && u1[i][j] < u2[i][j]) {
-                    min = u1[i][j];
-                }else if (u2[i][j] < min && u2[i][j] < u1[i][j]) {
-                    min = u2[i][j];
+
+        if(player == 1) {
+            double[][] u1 = game.u1;
+            //check the lowest number in u1 and u2 and them sum the abs of that number to all if the number is negative
+            for (int i = 0; i < u1.length; i++) {
+                for (int j = 0; j < u1[0].length; j++) {
+                    if (i != rowCol && u1[i][j] < min && game.pRow[i] && game.pCol[j])
+                        min = u1[i][j];
+
+                }
+            }
+        }else{
+            double[][] u2 = game.u2;
+            //check the lowest number in u1 and u2 and them sum the abs of that number to all if the number is negative
+            for (int i = 0; i < u2.length; i++) {
+                for (int j = 0; j < u2[0].length; j++) {
+                    if (j != rowCol && u2[i][j] < min && game.pRow[i] && game.pCol[j])
+                        min = u2[i][j];
+
                 }
             }
         }
-        if(min>0)
-            return;
-
-        double absMin = Math.abs(min);
-        for (int i = 0; i < u1.length; i++) {
-            for (int j = 0; j < u1[0].length; j++) {
-                u1[i][j] += absMin;
-                u2[i][j] += absMin;
-            }
-        }
-
-        game.u1 = u1;
-        game.u2 = u2;
+        if (min > 0)
+            return 0;
+        else
+            return Math.abs(min);
 
 
     }
 
     private static double[][] addAbsToA(double[][] originalMatrix, double min) {
 
-		double[][] matrix = originalMatrix.clone();
+        double[][] matrix = originalMatrix.clone();
 
         for (int i = 0; i < matrix.length; i++) {
             for (int j = 0; j < matrix[0].length; j++) {
@@ -67,7 +66,7 @@ public class IteratedDomination {
     }
 
     private static double[] addAbsToB(double[] originalArray, double min) {
-		double[] b = originalArray.clone();
+        double[] b = originalArray.clone();
         for (int i = 0; i < b.length; i++) {
             b[i] += Math.abs(min);
         }
@@ -88,27 +87,34 @@ public class IteratedDomination {
         return transposed;
     }
 
-    private static double[][] makeConstraints(double[][] utilityMatrix, int colRowNum, NormalFormGame game) {
+    private static double[][] makeConstraints(double[][] utilityMatrix, int colRowNum, NormalFormGame game, double min) {
         double[][] A;
         int lineCount = 0;
+        int colCount = 0;
+        int currentARow = 0;
 
         for (int i = 0; i < utilityMatrix.length; i++) {
-                if (game.pRow[i])
-                    lineCount++;
+            if (game.pRow[i])
+                lineCount++;
+        }
+        for (int i = 0; i < utilityMatrix[0].length; i++) {
+            if (game.pCol[i])
+                colCount++;
         }
 
-        A = new double[utilityMatrix[0].length][lineCount - 1];
+        A = new double[colCount][lineCount - 1];
 
         int aux1 = 0;//TODO
-        for (int i = 0; i <= A.length; i++) {
+        for (int i = 0; i < utilityMatrix.length; i++) {
             int aux2 = 0;
-            for (int j = 0; j < A[0].length; j++) {
-                if (colRowNum != i && game.pCol[j] && game.pRow[i]) {
-                    A[aux1][aux2] = utilityMatrix[i][j];
+            for (int j = 0; j < utilityMatrix[0].length; j++) {
+                if (game.pCol[j] && game.pRow[i] && colRowNum != currentARow) {
+                    A[aux2][aux1] = utilityMatrix[i][j] + min;
                     aux2++;
                 }
             }
-            if (colRowNum != i && game.pRow[i]) aux1++;
+            if (game.pRow[i] && colRowNum != currentARow) aux1++;
+            if (game.pRow[i]) currentARow++;
         }
 
         return A;
@@ -138,31 +144,70 @@ public class IteratedDomination {
 
         double[] b = new double[0]; // Independent Factors
         double[][] A = new double[0][0]; // constraints left side
+        double min = CheckNegativeNumbers(game, colRowNum, player);
         if (player == 1) {
-            b = game.u1[colRowNum];    // constantes das constraints, que aqui vão ser as utilidades da linha/col checked
-            A = makeConstraints(game.u1, colRowNum, game);
+            //b = game.u1[colRowNum];    // constantes das constraints, que aqui vão ser as utilidades da linha/col checked
+            int currentGameRow = 0;
+            for (int i = 0; i < game.u1.length; i++) {
+
+                if (game.pRow[i]) {
+                    if (currentGameRow == colRowNum) {
+                        b = game.u1[i];
+                        break;
+                    }
+                    currentGameRow++;
+                }
+
+            }
+            A = makeConstraints(game.u1, colRowNum, game, min);
         }
         if (player == 2) {
-            System.err.println("player 2.---------------");
-            b = game.u2[colRowNum];
+            int counter = 0;
+            for(int j = 0; j < game.u2.length; j++){
+                if(game.pRow[j]){
+                    counter++;
+                }
+            }
+            b = new double[counter];
+            //b = game.u2[colRowNum];
+            int currentGameCol = 0;
+            for (int i = 0; i < game.u2[0].length; i++) {
+
+                if (game.pCol[i]) {
+                    if (currentGameCol == colRowNum) {
+                        int counter2 = 0;
+                        for(int j = 0; j < game.u2.length; j++){
+                            if(game.pRow[j]){
+                                b[counter2] = game.u2[j][i];
+                                counter2++;
+                            }
+                        }
+                        break;
+                    }
+                    currentGameCol++;
+                }
+            }
+
             // transpor game.u2
-            double[][] transposeG = transposeMatrix(game.u2);
+            //double[][] transposeG = transposeMatrix(game.u2);
+
             // aplicar makeConstraints ao resultado
-            A = makeConstraints(transposeG, colRowNum, game);
+            A = makeConstraints(game.u2, colRowNum, game, min);
+            int a = 10;
         }
 
-        System.err.println("Original matrix: " + Arrays.deepToString(A));
-        A = transposeMatrix(A);
+        //System.err.println("Original matrix: " + Arrays.deepToString(A));
+        //A = transposeMatrix(A);
         double[] lb = new double[count - 1];
         lp = new LinearProgram(c);
         lp.setMinProblem(true);
-        System.err.println("matrix: " + Arrays.deepToString(A));
-        System.err.println("Lower bound: " + Arrays.toString(lb));
-        System.err.println("b: " + Arrays.toString(b));
-        System.err.println("c: " + Arrays.toString(c));
+//        System.err.println("matrix: " + Arrays.deepToString(A));
+//        System.err.println("Lower bound: " + Arrays.toString(lb));
+//        System.err.println("b: " + Arrays.toString(b));
+//        System.err.println("c: " + Arrays.toString(c));
         for (int i = 0; i < A.length; i++) {
 
-            lp.addConstraint(new LinearBiggerThanEqualsConstraint(A[i], b[i], "c" + i));
+            lp.addConstraint(new LinearBiggerThanEqualsConstraint(A[i], b[i]+ min, "c" + i));
         }
         lp.setLowerbound(lb);
     }
@@ -181,7 +226,7 @@ public class IteratedDomination {
         boolean hasSolution = solveLP();
         showSolution();
 
-        System.err.println("hasSolution: " + hasSolution);
+        //System.err.println("hasSolution: " + hasSolution);
 
         if (!hasSolution) return false;
 
@@ -197,12 +242,24 @@ public class IteratedDomination {
         if (sum >= 1) {
             isDominated = false;
         }
-        System.err.println("IsDominated: " + isDominated);
+        //System.err.println("IsDominated: " + isDominated);
 
         if (isDominated) {
             System.err.println("Chegou aqui");
             if (player == 1) {
-                game.pRow[colRowNum] = false;
+                //game.pRow[colRowNum] = false;
+                int currentGameRow = 0;
+                for (int i = 0; i < game.u1.length; i++) {
+
+                    if (game.pRow[i]) {
+                        if (currentGameRow == colRowNum) {
+                            game.pRow[i] = false;
+                            break;
+                        }
+                        currentGameRow++;
+                    }
+
+                }
             } else {
                 game.pCol[colRowNum] = false;
             }
@@ -216,25 +273,33 @@ public class IteratedDomination {
         boolean CanRemoveColRow = true;
         boolean dominated;
         int loopCount = 0;
-
-        CheckNegativeNumbers(game);
+        int activeRows=0;
+        int activeCols=0;
 
         while (CanRemoveColRow && loopCount < 20) {
-
+            activeRows=0;
+            activeCols=0;
             dominated = false;
+            for (int i = 0; i < game.nRow; i++) {
+                if(game.pRow[i]) activeRows++;
+            }
             for (int i = 0; i < game.nRow && !dominated; i++) {
-                dominated = CheckIfDominated(game, 1, i);
+
+                if(activeRows > i)dominated = CheckIfDominated(game, 1, i);
+
 
             }
 
+            for (int i = 0; i < game.nCol; i++) {
+                if(game.pCol[i]) activeCols++;
+            }
             for (int j = 0; j < game.nCol && !dominated; j++) {
 
                 dominated = CheckIfDominated(game, 2, j);
-
             }
 
             if (!dominated) {
-                System.err.println("Não há mais linhas/colunas dominadas");
+                //System.err.println("Não há mais linhas/colunas dominadas");
                 CanRemoveColRow = false;
             }
             loopCount++;
@@ -302,9 +367,9 @@ public class IteratedDomination {
 //        showSolution();
 
         //create a game with this matrix for utility of player 1
-        int[][] A = {{-2, -1, -3, 3, 4}, {0, -4, 1, 0, -1}, {2, -1, 2, 2, -1}, {-1, -2, -3, 1, 0}, {-1, 1, 4, 0, 6}};
+        int[][] A = {{-2, -1, -3, 3, 4}, {0, 4, 0, -1, 2}, {2, -1, 2, 2, -1}, {-1, -2, -3, 1, 0}, {-1, 1, -1, -3, 1}};
         //create a game with this matrix for utility of player 2
-        int[][] B = {{0, 4, 0, -1, 2}, {2, -1, 4, -1, 1}, {3, 0, 3, 2, 1}, {-1, -1, 1, 4, 0}, {4, 1, 0, 1, 0}};
+        int[][] B = {{0, -4, 1, 0, -1}, {2, -1, 4, -1, 1}, {3, 0, 3, 2, 1}, {-1, 3, 1, 4, 0}, {4, 1, 4, 0, 6}};
         //create labels for the strategies of player 1
         String[] labelsRow = {"A", "C", "B", "E", "D"};
         //create labels for the strategies of player 2
