@@ -52,27 +52,6 @@ public class IteratedDomination {
 
     }
 
-    private static double[][] addAbsToA(double[][] originalMatrix, double min) {
-
-        double[][] matrix = originalMatrix.clone();
-
-        for (int i = 0; i < matrix.length; i++) {
-            for (int j = 0; j < matrix[0].length; j++) {
-                matrix[i][j] += Math.abs(min);
-            }
-        }
-
-        return matrix;
-    }
-
-    private static double[] addAbsToB(double[] originalArray, double min) {
-        double[] b = originalArray.clone();
-        for (int i = 0; i < b.length; i++) {
-            b[i] += Math.abs(min);
-        }
-        return b;
-    }
-
     public static double[][] transposeMatrix(double[][] originalArray) {
 
         //given a matrix, compute the transpose
@@ -94,22 +73,22 @@ public class IteratedDomination {
         int currentARow = 0;
 
         for (int i = 0; i < utilityMatrix.length; i++) {
-            if (game.pRow[i])
+            if (game.pCol[i])
                 lineCount++;
         }
         for (int i = 0; i < utilityMatrix[0].length; i++) {
-            if (game.pCol[i])
+            if (game.pRow[i])
                 colCount++;
         }
 
-        A = new double[lineCount][colCount - 1];
+        A = new double[lineCount - 1][colCount];
 
         int aux1 = 0;//TODO
         for (int i = 0; i < utilityMatrix.length; i++) {
             int aux2 = 0;
             for (int j = 0; j < utilityMatrix[0].length; j++) {
                 if (game.pCol[i] && game.pRow[j] && colRowNum != currentARow) {
-                    A[aux2][aux1] = utilityMatrix[i][j] + min;
+                    A[aux1][aux2] = utilityMatrix[i][j] + min;
                     aux2++;
                 }
             }
@@ -240,7 +219,7 @@ public class IteratedDomination {
 
             // aplicar makeConstraints ao resultado
             A = makeConstraintsCols(transposeG, colRowNum, game, min);
-            int a = 10;
+            A = transposeMatrix(A);
         }
 
         //System.err.println("Original matrix: " + Arrays.deepToString(A));
@@ -330,10 +309,9 @@ public class IteratedDomination {
         boolean CanRemoveColRow = true;
         boolean dominated;
         int loopCount = 0;
-        int activeRows=0;
-        int activeCols=0;
+        int activeRows, activeCols;
 
-        while (CanRemoveColRow && loopCount < 10) {
+        while (CanRemoveColRow) {
             activeRows=0;
             activeCols=0;
             dominated = false;
@@ -384,7 +362,7 @@ public class IteratedDomination {
                 fs = String.format(Locale.US, "%+7.1f", cf[i]);
                 System.out.print(fs + "*x[" + i + "]");
             }
-        System.out.println("");
+        System.out.println(" ");
         System.out.print("subject to: ");
         ArrayList<Constraint> lcstr = lp.getConstraints();
         double aij;
@@ -424,21 +402,13 @@ public class IteratedDomination {
 //        showSolution();
 
         //create a game with this matrix for utility of player 1
-        //int[][] A = {{-2, -1, -3, 3, 4}, {0, 4, 0, -1, 2}, {2, -1, 2, 2, -1}, {-1, -2, -3, 1, 0}, {-1, 1, -1, -3, 1}};
-        //int[][] A = {{9,2},{0,10}};
-        int[][] A = {{2,6,-1,3},{2,-4,5,5}, {0,-1,0,2}, {-2,-2,0,-2}};
+        int[][] A = {{2,6,-1},{2,-4,5}, {0,-1,0}, {-2,-2,0}};
         //create a game with this matrix for utility of player 2
-        //int[][] B = {{0, -4, 1, 0, -1}, {2, -1, 4, -1, 1}, {3, 0, 3, 2, 1}, {-1, 3, 1, 4, 0}, {4, 1, 4, 0, 6}};
-        //int[][] B = {{10,12},{10,2}};
-        int[][] B = {{-4,6,-1,-3},{-5,-4,-2,5},{6,1,0,2}, {-6,2,1,2}};
+        int[][] B = {{-4,6,-1},{-5,-4,-2},{6,1,0}, {-6,2,1}};
         //create labels for the strategies of player 1
-        //String[] labelsRow = {"A", "C", "B", "E", "D"};
-//        String[] labelsRow ={"1","2"};
         String[] labelsRow ={"1","2","3","4"};
         //create labels for the strategies of player 2
-        //String[] labelsCol = {"Z", "Y", "X", "W", "V"};
-        //String[] labelsCol = {"1","2"};
-        String[] labelsCol ={"4","3","2","1"};
+        String[] labelsCol ={"5", "6", "7"};
         //create a game with the matrixes A and B and the labels for the strategies
         NormalFormGame game = new NormalFormGame(A, B, labelsRow, labelsCol);
 

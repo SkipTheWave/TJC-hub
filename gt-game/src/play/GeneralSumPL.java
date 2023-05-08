@@ -248,7 +248,8 @@ public class GeneralSumPL {
 
     }
 
-    private static int ReceiveSupports(int numberSupport, List<boolean[]> sup1, List<boolean[]> sup2, NormalFormGame game, int numberOfNE) {
+    private static int ReceiveSupports(int numberSupport, List<boolean[]> sup1, List<boolean[]> sup2,
+                                       NormalFormGame game, int numberOfNE, boolean stopAfterFirst) {
 
         CheckNegativeNumbers(game);
 
@@ -263,8 +264,8 @@ public class GeneralSumPL {
                     //showSolution();
                     System.out.println("Nash Equilibrium #"+ numberOfNE);
                     ShowNE(value, booleans, game);
-                    // UNCOMMENT LINE BELOW TO STOP AFTER NASH EQUILIBRIUM
-                    //return -1;
+                    if(stopAfterFirst)
+                        return -1;
                 } else {
                     System.out.println("NO SOLUTION FOUND");
                 }
@@ -273,13 +274,11 @@ public class GeneralSumPL {
         return numberOfNE;
     }
 
-    public static void ComputeGame(NormalFormGame game) {
+    public static void ComputeGame(NormalFormGame game, boolean stopAfterFirst) {
 
         List<boolean[]> support, support2;
-        boolean[] iRow = new boolean[game.nRow];
-        Arrays.fill(iRow, true);
-        boolean[] iCol = new boolean[game.nCol];
-        Arrays.fill(iCol, true);
+        boolean[] iRow = game.pRow;
+        boolean[] iCol = game.pCol;
 
         int numberOfSupports = Math.min(game.nRow, game.nCol);
         int numberOfNE = 0;
@@ -287,7 +286,7 @@ public class GeneralSumPL {
             System.out.println("Support " + i + " + " + i);
             support = GetSubSets.getSubSets(0, i, game.nRow, iRow);
             support2 = GetSubSets.getSubSets(0, i, game.nCol, iCol);
-            int aux = ReceiveSupports(i, support, support2, game, numberOfNE);
+            int aux = ReceiveSupports(i, support, support2, game, numberOfNE, stopAfterFirst);
             if(aux == -1) return;
             numberOfNE = aux;
         }
@@ -316,7 +315,7 @@ public class GeneralSumPL {
         game.colActions.add("B");
         game.colActions.add("C");
 
-        ComputeGame(game);
+        ComputeGame(game, false);
 
     }
 }

@@ -8,7 +8,7 @@ import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
 
-public class NEIteratedDominationStrategy extends Strategy{
+public class SingleNEIteratedDominationStrategy extends Strategy{
 
     @Override
     public void execute() throws InterruptedException {
@@ -88,7 +88,7 @@ public class NEIteratedDominationStrategy extends Strategy{
                 game.pCol = IteratedDomination.IteratedDominationGame(game).pCol;
                 game.showGame();
 
-                GeneralSumPL.ComputeGame(game, false);
+                GeneralSumPL.ComputeGame(game, true);
 
                 setStrategy(1, labelsP1, myStrategy);
                 setStrategy(2, labelsP2, myStrategy);

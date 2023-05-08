@@ -86,7 +86,7 @@ public class NEStrategy extends Strategy{
                 NormalFormGame game = new NormalFormGame(U1, U2, labelsP1, labelsP2);
                 game.showGame();
 
-                GeneralSumPL.ComputeGame(game);
+                GeneralSumPL.ComputeGame(game, false);
 
                 setStrategy(1, labelsP1, myStrategy);
                 setStrategy(2, labelsP2, myStrategy);
