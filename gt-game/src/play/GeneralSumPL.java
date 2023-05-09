@@ -19,6 +19,8 @@ public class GeneralSumPL {
     static LinearProgram lp;
     static double[] x;
 
+    static String showNE;
+
     public GeneralSumPL() {
     }
 
@@ -192,27 +194,33 @@ public class GeneralSumPL {
 
     private static void ShowNE(boolean[] sup1, boolean[] sup2, NormalFormGame game){
 
+        showNE += "Player 1 strategy: \n";
         System.out.println("Player 1 strategy: ");
         int x_counter = 0;
         for (int i = 0; i < sup1.length; i++) {
             if(sup1[i]) {
                 System.out.println((Math.round(x[x_counter] * 100.0) / 100.0) + " : " + game.rowActions.get(i));
+                showNE += (Math.round(x[x_counter] * 100.0) / 100.0) + " : " + game.rowActions.get(i) + "\n";
                 x_counter++;
             }
-            else
-                System.out.println("0,00 : "+ game.rowActions.get(i));
+            else {
+                System.out.println("0,00 : " + game.rowActions.get(i));
+                showNE += "0,00 : " + game.rowActions.get(i) + "\n";
+            }
         }
         System.out.println("Player 2 strategy: ");
+        showNE += "Player 2 strategy: \n";
         for (int i = 0; i < sup2.length; i++) {
             if(sup2[i]) {
                 System.out.println((Math.round(x[x_counter] * 100.0) / 100.0) + " : " + game.colActions.get(i));
+                showNE += (Math.round(x[x_counter] * 100.0) / 100.0) + " : " + game.colActions.get(i) + "\n";
                 x_counter++;
             }
-            else
-                System.out.println("0,00 : "+ game.colActions.get(i));
+            else {
+                System.out.println("0,00 : " + game.colActions.get(i));
+                showNE += "0,00 : " + game.colActions.get(i) + "\n";
+            }
         }
-
-
     }
 
     static void CheckNegativeNumbers(NormalFormGame game){
@@ -291,6 +299,7 @@ public class GeneralSumPL {
             numberOfNE = aux;
         }
         System.out.println("All solutions found: " + numberOfNE);
+        System.out.println(showNE);
 
     }
 

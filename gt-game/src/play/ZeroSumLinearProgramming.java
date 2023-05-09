@@ -23,6 +23,15 @@ public class ZeroSumLinearProgramming {
     public ZeroSumLinearProgramming() {
     }
 
+    public static double[][] symmetricNumberMatrix(double[][] originalM) {
+        double[][] resultM = new double[originalM.length][originalM[0].length];
+        for (int i = 0; i < originalM.length; i++) {
+            for (int j = 0; j < originalM[0].length; j++) {
+                resultM[i][j] = -originalM[i][j];
+            }
+        }
+        return resultM;
+    }
 
     public static void setLP1(int player, double[][] opponentUtilMatrix) {
 
@@ -149,10 +158,28 @@ public class ZeroSumLinearProgramming {
         showSolution();
     }
 
+    public static double[] ComputeMaxMin(NormalFormGame game, int player) {
+        System.out.printf("********** PLAYER %d UTILITY **********\n", player);
+        if(player == 1) {
+            game.u2 = symmetricNumberMatrix(game.u1);
+            setLP1(1, game.u2);
+        }
+        else if(player == 2) {
+            game.u1 = symmetricNumberMatrix(game.u2);
+            setLP1(2, game.u1);
+        }
+        showLP();
+        solveLP();
+        showSolution();
+
+        double[] strat = Arrays.copyOf(x, x.length-1);
+        return strat; // TODO
+    }
+
     public static void main(String[] args) {
         NormalFormGame game = new NormalFormGame();
         game.u1 = new double[][]{{3, 2, 1}, {-5, -4, 0}, {2, 0, -2}};
-        game.u2 = new double[][]{{-3, -2, -1}, {5, 4, 0}, {-2, 0, 2}};
+        game.u2 = new double[][]{{4, 2, 0}, {5, 2, 1}, {-5, -2, 1}};
         // add actions to the game
         game.nRow = 3;
         game.nCol = 3;
@@ -167,7 +194,7 @@ public class ZeroSumLinearProgramming {
         game.colActions.add("B");
         game.colActions.add("C");
 
-        ComputeZeroSumNE(game);
+        ComputeMaxMin(game, 1);
     }
 
 }
