@@ -20,6 +20,8 @@ public class ZeroSumLinearProgramming {
     static LinearProgram lp;
     static double[] x;
 
+    static String showNE;
+
     public ZeroSumLinearProgramming() {
     }
 
@@ -143,6 +145,38 @@ public class ZeroSumLinearProgramming {
         }
     }
 
+    private static void ShowNE(boolean[] sup1, boolean[] sup2, NormalFormGame game, int player){
+        int x_counter = 0;
+        if(player == 1) {
+            showNE += "Player 1 strategy: \n";
+            System.out.println("Player 1 strategy: ");
+
+            for (int i = 0; i < sup1.length; i++) {
+                if (sup1[i]) {
+                    System.out.println((Math.round(x[x_counter] * 100.0) / 100.0) + " : " + game.rowActions.get(i));
+                    showNE += (Math.round(x[x_counter] * 100.0) / 100.0) + " : " + game.rowActions.get(i) + "\n";
+                    x_counter++;
+                } else {
+                    System.out.println("0,00 : " + game.rowActions.get(i));
+                    showNE += "0,00 : " + game.rowActions.get(i) + "\n";
+                }
+            }
+        }else {
+            System.out.println("Player 2 strategy: ");
+            showNE += "Player 2 strategy: \n";
+            for (int i = 0; i < sup2.length; i++) {
+                if (sup2[i]) {
+                    System.out.println((Math.round(x[x_counter] * 100.0) / 100.0) + " : " + game.colActions.get(i));
+                    showNE += (Math.round(x[x_counter] * 100.0) / 100.0) + " : " + game.colActions.get(i) + "\n";
+                    x_counter++;
+                } else {
+                    System.out.println("0,00 : " + game.colActions.get(i));
+                    showNE += "0,00 : " + game.colActions.get(i) + "\n";
+                }
+            }
+        }
+    }
+
     public static void ComputeZeroSumNE(NormalFormGame game) {
         //CheckNegativeNumbers(game);
         System.out.println("********** PLAYER 1 STRATEGY **********");
@@ -164,6 +198,7 @@ public class ZeroSumLinearProgramming {
             game.u2 = symmetricNumberMatrix(game.u1);
             setLP1(1, game.u2);
         }
+
         else if(player == 2) {
             game.u1 = symmetricNumberMatrix(game.u2);
             setLP1(2, game.u1);
@@ -171,6 +206,27 @@ public class ZeroSumLinearProgramming {
         showLP();
         solveLP();
         showSolution();
+        ShowNE(game.pRow, game.pCol, game, player);
+
+        double[] strat = Arrays.copyOf(x, x.length-1);
+        return strat; // TODO
+    }
+
+    public static double[] ComputeMinMax(NormalFormGame game, int player) {
+        System.out.printf("********** PLAYER %d UTILITY **********\n", player);
+        if(player == 1) {
+            game.u1 = symmetricNumberMatrix(game.u2);
+            setLP1(1, game.u2);
+        }
+
+        else if(player == 2) {
+            game.u2 = symmetricNumberMatrix(game.u1);
+            setLP1(2, game.u1);
+        }
+        showLP();
+        solveLP();
+        showSolution();
+        ShowNE(game.pRow, game.pCol, game, player);
 
         double[] strat = Arrays.copyOf(x, x.length-1);
         return strat; // TODO
