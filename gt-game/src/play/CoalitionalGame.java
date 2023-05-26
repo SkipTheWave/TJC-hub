@@ -1,5 +1,13 @@
 package play;
 
+import scpsolver.constraints.Constraint;
+import scpsolver.constraints.LinearBiggerThanEqualsConstraint;
+import scpsolver.constraints.LinearEqualsConstraint;
+import scpsolver.constraints.LinearSmallerThanEqualsConstraint;
+import scpsolver.lpsolver.LinearProgramSolver;
+import scpsolver.lpsolver.SolverFactory;
+import scpsolver.problems.LinearProgram;
+
 import java.io.FileNotFoundException;
 import java.util.*;
 
@@ -9,6 +17,10 @@ public class CoalitionalGame {
 	public String[] ids;
 
 	public double shapley = 0;
+
+	static LinearProgram lp;
+
+	static double[] x;
 
 	public ArrayList<Double> shapleyValue = new ArrayList<>();
 	
@@ -26,6 +38,64 @@ public class CoalitionalGame {
 			ids[i] = (String.valueOf((char)c));
 		}
 	}
+
+	public static boolean solveLP() {
+		LinearProgramSolver solver = SolverFactory.newDefault();
+		x = solver.solve(lp);
+		return x != null;
+	}
+
+	public static void showLP() {
+		System.out.println("*********** LINEAR PROGRAMMING PROBLEM ***********");
+		String fs;
+		if (lp.isMinProblem()) System.out.print("  minimize: ");
+		else System.out.print("  maximize: ");
+		double[] cf = lp.getC();
+		for (int i = 0; i < cf.length; i++)
+			if (cf[i] != 0) {
+				fs = String.format(Locale.US, "%+7.1f", cf[i]);
+				System.out.print(fs + "*x[" + i + "]");
+			}
+		System.out.println("");
+		System.out.print("subject to: ");
+		ArrayList<Constraint> lcstr = lp.getConstraints();
+		double aij;
+		double[] ci = null;
+		String str = null;
+		for (int i = 0; i < lcstr.size(); i++) {
+			if (lcstr.get(i) instanceof LinearSmallerThanEqualsConstraint) {
+				str = " <= ";
+				ci = ((LinearSmallerThanEqualsConstraint) lcstr.get(i)).getC();
+			}
+			if (lcstr.get(i) instanceof LinearBiggerThanEqualsConstraint) {
+				str = " >= ";
+				ci = ((LinearBiggerThanEqualsConstraint) lcstr.get(i)).getC();
+			}
+			if (lcstr.get(i) instanceof LinearEqualsConstraint) {
+				str = " == ";
+				ci = ((LinearEqualsConstraint) lcstr.get(i)).getC();
+			}
+			str = str + String.format(Locale.US, "%6.1f", lcstr.get(i).getRHS());
+			if (i != 0) System.out.print("            ");
+			for (int j = 0; j < lp.getDimension(); j++) {
+				aij = ci[j];
+				if (aij != 0) {
+					fs = String.format(Locale.US, "%+7.1f", aij);
+					System.out.print(fs + "*x[" + j + "]");
+				} else System.out.print("            ");
+			}
+			System.out.println(str);
+		}
+	}
+
+	public static void showSolution() {
+		if (x == null) System.out.println("*********** NO SOLUTION FOUND ***********");
+		else {
+			System.out.println("*********** SOLUTION ***********");
+			for (int i = 0; i < x.length; i++) System.out.println("x[" + i + "] = " + x[i]);
+			System.out.println("f(x) = " + lp.evaluate(x));
+		}
+	}
 	
 	public void showGame() {
 		System.out.println("*********** Coalitional Game ***********");
@@ -33,6 +103,22 @@ public class CoalitionalGame {
 			showSet(i); 
 			System.out.println(" ("+v[i]+")");
 		}
+	}
+
+	public boolean isShapleyInCore(){
+		for (int i=0;i<v.length;i++) {
+			ArrayList<Integer> set = getSet(i);
+			double sV = 0; // value of individual value
+			for(int j=0;j<set.size();j++){
+				sV += shapleyValue.get(j);//share of player j
+			}
+			if(sV < v[i]) {
+				System.out.println("Shapley value is not in core");
+				return false;
+			}
+
+		}
+		return true;
 	}
 	
 	public void showSet(long v) {
@@ -103,7 +189,7 @@ public class CoalitionalGame {
 
 		if (k==0) {
 			showSet(v0);
-			shapley += ComputeShapleyValue(getSet(v0), coalitional, nPlayers - 1 - iZero, factorialN);
+			shapley += GainsInSubSet(getSet(v0), coalitional, nPlayers - 1 - iZero, factorialN);
 			//System.out.println("\nShare of " + coalitional.ids[nPlayers - 1 - iZero] + " = " + shapleyValue);
 		}
 		else {
@@ -116,7 +202,7 @@ public class CoalitionalGame {
 				}
 				v0 = v0 + value;
 				showSet(v0);
-				shapley += ComputeShapleyValue(getSet(v0), coalitional, nPlayers - 1 - iZero, factorialN);
+				shapley += GainsInSubSet(getSet(v0), coalitional, nPlayers - 1 - iZero, factorialN);
 				//System.out.println("\nShare of " + coalitional.ids[nPlayers - 1 - iZero] + " = " + shapleyValue);
 			}
 			else {	
@@ -148,9 +234,9 @@ public class CoalitionalGame {
 		return factorial;
 	}
 
-	public double ComputeShapleyValue( ArrayList<Integer> subSet, CoalitionalGame coalitional, int j, double[] factorialN){
+	public double GainsInSubSet(ArrayList<Integer> subSet, CoalitionalGame coalitional, int j, double[] factorialN){
 
-		double shapley;
+		double gains;
 		int s = subSet.size();
 		int n = this.nPlayers;
 		int nPlayersComplement = nPlayers - s -1;
@@ -164,10 +250,39 @@ public class CoalitionalGame {
 		double valueWithPlayer = coalitional.getValue(subSet);
 		subSet.removeAll(Arrays.asList(j));
 		Collections.sort(subSet, Collections.reverseOrder());
-		shapley = sFactorial * complementFactorial * (valueWithPlayer - valueWithoutPlayer) / nFactorial;
+		gains = sFactorial * complementFactorial * (valueWithPlayer - valueWithoutPlayer) / nFactorial;
 
-		return shapley;
+		return gains;
 
+	}
+
+	public boolean isCoreEmpty() {
+		int nElements = ids.length;//(int) (Math.log(v.length) / Math.log(2));
+		double[] c = new double[nElements];
+		Arrays.fill(c, 0.0);
+		double[] b = v;
+		double[][] A = new double[v.length][nElements];
+
+		for (int i=0; i<v.length; i++) {
+			ArrayList<Integer> set = getSet(i);		// integer of each player in set
+			for(int j=0; j<set.size(); j++) {
+				A[i][set.get(j)] = 1.0;
+			}
+		}
+		double[] lb = c;
+
+		lp = new LinearProgram(c);
+		lp.setMinProblem(true);
+		for(int i =0; i< b.length; i++){
+			if(i == b.length -1){
+				lp.addConstraint(new LinearEqualsConstraint(A[i], b[i], "c" + i));
+			}else{
+				lp.addConstraint(new LinearBiggerThanEqualsConstraint(A[i], b[i], "c" + i));
+			}
+		}
+		lp.setLowerbound(lb);
+		showLP();
+		return solveLP();
 	}
 	
 	public static void main(String[] args) throws FileNotFoundException {
@@ -195,7 +310,6 @@ public class CoalitionalGame {
 
 			System.out.println(Arrays.toString(v1));
 
-
 			//CoalitionalGame c = new CoalitionalGame(v2);
 			CoalitionalGame c = new CoalitionalGame(v1);
 			double[] factorialN  = calculateFactorials(c.nPlayers);
@@ -211,6 +325,24 @@ public class CoalitionalGame {
 				}
 				System.out.println("\nShare of " + c.ids[c.nPlayers - 1 - j] + " = " + c.shapley);
 				c.shapleyValue.add(c.shapley);
+
+			}
+			Collections.sort(c.shapleyValue, Collections.reverseOrder());
+			boolean inCore = c.isShapleyInCore();
+			if(!inCore) {
+				boolean sol = c.isCoreEmpty();
+				if(sol){
+					showSolution();
+					System.out.println("Possible core solution: ");
+					for( int i = 0; i < c.nPlayers; i++){
+						System.out.println("Player " + c.ids[i] + " = " + x[i]);
+					}
+				}else{
+					System.out.println("The core is empty");
+				}
+			}else{
+				System.out.println("The Shapley value is in the core");
+				System.out.println("Possible core solution: " + c.shapleyValue.toString());
 			}
 
 		} catch (Exception e) {
