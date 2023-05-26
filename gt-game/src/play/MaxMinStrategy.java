@@ -86,10 +86,11 @@ public class MaxMinStrategy extends Strategy{
                 NormalFormGame game = new NormalFormGame(U1, U2, labelsP1, labelsP2);
                 game.showGame();
 
-                ZeroSumLinearProgramming.ComputeMaxMin(game, 2);            // change player num here
-                //ZeroSumLinearProgramming.ComputeMinMax(game,2);
+                //ZeroSumLinearProgramming.ComputeMaxMin(game, 2);            // change player num here
+                ZeroSumLinearProgramming.ComputeMinMax(game,2);
 
-                // TODO actually use a strategy with the right values
+                // TODO actually use a strategy with the right valuesy
+
                 setStrategy(1, labelsP1, myStrategy);
                 setStrategy(2, labelsP2, myStrategy);
 
