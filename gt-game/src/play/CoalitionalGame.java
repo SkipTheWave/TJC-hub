@@ -8,6 +8,7 @@ import scpsolver.lpsolver.LinearProgramSolver;
 import scpsolver.lpsolver.SolverFactory;
 import scpsolver.problems.LinearProgram;
 
+import java.io.File;
 import java.io.FileNotFoundException;
 import java.util.*;
 
@@ -113,6 +114,7 @@ public class CoalitionalGame {
 				sV += shapleyValue.get(j);//share of player j
 			}
 			if(sV < v[i]) {
+				System.out.println(sV + " < " + v[i] + " on set " + set);
 				System.out.println("Shapley value is not in core");
 				return false;
 			}
@@ -246,14 +248,18 @@ public class CoalitionalGame {
 
 		double valueWithoutPlayer = coalitional.getValue(subSet);
 		subSet.add(j);
+		//Collections.reverse(subSet);
 		Collections.sort(subSet, Collections.reverseOrder());
 		double valueWithPlayer = coalitional.getValue(subSet);
 		subSet.removeAll(Arrays.asList(j));
 		Collections.sort(subSet, Collections.reverseOrder());
 		gains = sFactorial * complementFactorial * (valueWithPlayer - valueWithoutPlayer) / nFactorial;
 
+//		BigDecimal a = new BigDecimal(gains);
+//		a = a.setScale(2, RoundingMode.HALF_UP);
+//		return a.doubleValue();
+		//double roundGains = Math.round(gains * 2) / 2.0;
 		return gains;
-
 	}
 
 	public boolean isCoreEmpty() {
@@ -291,27 +297,53 @@ public class CoalitionalGame {
 		int nLines = 0;
 
 		try {
-//			String pathname = "C:\\Users\\pedro\\IdeaProjects\\TJC-hub\\gt-game\\quiz4_examples\\EC1.txt";
-//			Scanner file = new Scanner(new File(pathname));
-//			Scanner fileAux = new Scanner(new File(pathname));
-//
-//			while (fileAux.hasNextLine()) {
-//				nLines++;
-//				fileAux.nextLine();
-//			}
+			String pathname = "C:\\Users\\Skip\\Desktop\\The Warehouse\\UNI\\TJC\\Labs\\gt-game\\quiz4_examples\\EC2.txt";
+			Scanner file = new Scanner(new File(pathname));
+			Scanner fileAux = new Scanner(new File(pathname));
+
+			while (fileAux.hasNextLine()) {
+				nLines++;
+				fileAux.nextLine();
+			}
+			fileAux.close();
+
+			// FOR GENERIC PROBLEMS (Ex 1-3) (for others, comment this)
 //			double[] v2 = new double[nLines];
-//
 //			while (file.hasNextLine()) {
 //				v2[pCounter++] = file.nextDouble();
 //				file.nextLine();
 //			}
-//			file.close();
-//			fileAux.close();
 
-			System.out.println(Arrays.toString(v1));
+			// FOR WEIGHTED VOTING PROBLEMS (Ex 4-6) (for others, comment this)
+			int numVoters = nLines - 2;
+			int[] voterWeights = new int[numVoters];
 
-			//CoalitionalGame c = new CoalitionalGame(v2);
-			CoalitionalGame c = new CoalitionalGame(v1);
+			for (int i = 0; i < numVoters; i++) {
+				voterWeights[i] = Integer.parseInt(file.nextLine());
+			}
+
+			//CoalitionalGame c = new CoalitionalGame(voterWeights, voteThreshold, payoff);
+
+			int voteThreshold = Integer.parseInt(file.nextLine());
+			int payoff = Integer.parseInt(file.nextLine());
+
+			double[] v2 = new double[(int)Math.pow(2, numVoters)];
+
+			for (int i = 0; i < v2.length; i++) {
+				//if, adding up the votes of the players of this set, you pass the threshold
+				//then, v[i] == payoff
+				//else, v[i] == 0.0
+			}
+
+			// FOR WEIGHTED GRAPH PROBLEMS (Ex. 7-9) (otherwise, comment this)
+			// ... (WIP) ...
+
+			file.close();
+
+			System.out.println(Arrays.toString(v2));
+
+			CoalitionalGame c = new CoalitionalGame(v2);
+			//CoalitionalGame c = new CoalitionalGame(v1);
 			double[] factorialN  = calculateFactorials(c.nPlayers);
 
 			c.showGame();
@@ -323,11 +355,12 @@ public class CoalitionalGame {
 					c.permutation(0, i, j, 0, c, factorialN);
 					System.out.println();
 				}
-				System.out.println("\nShare of " + c.ids[c.nPlayers - 1 - j] + " = " + c.shapley);
-				c.shapleyValue.add(c.shapley);
+				double roundShapley = Math.round(c.shapley * 2) / 2.0;
+				System.out.println("\nShare of " + c.ids[c.nPlayers - 1 - j] + " = " + roundShapley);
+				c.shapleyValue.add(roundShapley);
 
 			}
-			Collections.sort(c.shapleyValue, Collections.reverseOrder());
+			//Collections.reverse(c.shapleyValue);
 			boolean inCore = c.isShapleyInCore();
 			if(!inCore) {
 				boolean sol = c.isCoreEmpty();
@@ -335,15 +368,21 @@ public class CoalitionalGame {
 					showSolution();
 					System.out.println("Possible core solution: ");
 					for( int i = 0; i < c.nPlayers; i++){
-						System.out.println("Player " + c.ids[i] + " = " + x[i]);
+						System.out.println("Player " + c.ids[c.ids.length-i-1] + " = " + x[i]);
 					}
 				}else{
-					System.out.println("The core is empty");
+					System.out.println("\nThe core is empty");
 				}
 			}else{
-				System.out.println("The Shapley value is in the core");
-				System.out.println("Possible core solution: " + c.shapleyValue.toString());
+				System.out.println("\nThe Shapley value is in the core");
+				System.out.println("Possible core solution: ");
+				for( int i = 0; i < c.nPlayers; i++){
+					System.out.println("Player " + c.ids[c.ids.length-i-1] + " = " + c.shapleyValue.get(i));
+				}
 			}
+
+			double roundOff = Math.round(c.shapleyValue.get(3) * 100.0) / 100.0;
+			System.out.println(roundOff);
 
 		} catch (Exception e) {
 			System.out.println(e.getMessage());
