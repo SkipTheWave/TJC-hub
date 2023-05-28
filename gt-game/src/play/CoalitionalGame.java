@@ -317,12 +317,12 @@ public class CoalitionalGame {
 
     public static void main(String[] args) throws FileNotFoundException {
         double[] v1 = {0.0, 0.0, 3.0, 8.0, 2.0, 7.0, 5.0, 10.0, 0.0, 0.0, 4.0, 9.0, 3.0, 8.0, 6.0, 11.0};
-        int pCounter = 0;
+        int pCounter = 1;
         int nLines = 0;
 
         try {
 
-            String pathname = "C:\\Users\\pedro\\IdeaProjects\\TJC-hub\\gt-game\\quiz4_examples\\EC3.txt";
+            String pathname = "C:\\Users\\pedro\\IdeaProjects\\TJC-hub\\gt-game\\quiz4_examples\\EC7.txt";
             Scanner file = new Scanner(new File(pathname));
 
 
@@ -331,14 +331,15 @@ public class CoalitionalGame {
                 file.nextLine();
             }
 
-            double[] v2 = new double[nLines];
-            file = new Scanner(new File(pathname));
-
-
-            while (file.hasNextLine()) {
-                v2[pCounter++] = Double.parseDouble(file.nextLine());
-
-            }
+            // Normal Coalition Games - uncomment this block
+//            double[] v2 = new double[nLines];
+//            file = new Scanner(new File(pathname));
+//
+//
+//            while (file.hasNextLine()) {
+//                v2[pCounter++] = Double.parseDouble(file.nextLine());
+//
+//            }
 
             // VOTING GAMES - uncomment this block
             /*
@@ -358,9 +359,41 @@ public class CoalitionalGame {
                 v[i] = (sum >= quota) ? spending : 0;
             }*/
 
+            // Weighted Graph Games - uncomment this block
+            int n = nLines +1;
+            // create a matrix with the worth of each coalition
+            double[][] v = new double[n][n];
+
+            file = new Scanner(new File(pathname));
+
+            while (file.hasNextLine()) {
+                String[] line = file.nextLine().split(" ");
+                for (int i = 0; i < line.length; i++) {
+                    v[pCounter][i] = Double.parseDouble(line[i]);
+                    v[i][pCounter] = v[pCounter][i];
+                }
+                pCounter++;
+
+            }
+
+            double[] v2 = new double[1 << n];
+
+
+            for (int i = 0; i < v2.length; i++) {
+                for (int j = 0; j < n; j++) {
+                    if ((i & (1 << j)) != 0) {
+                        // calculate the worth of each coalition
+                        for (int k = j + 1; k < n; k++) {
+                            if ((i & (1 << k)) != 0) {
+                                v2[i] += v[j][k];
+                            }
+                        }
+                    }
+                }
+            }
 
             CoalitionalGame c = new CoalitionalGame(v2);// for coalitional games
-            //CoalitionalGame c = new CoalitionalGame(v); // for voting games
+            //CoalitionalGame c = new CoalitionalGame(v); // for voting games and weighted graph games
             //CoalitionalGame c = new CoalitionalGame(v1);
             double[] factorialN = calculateFactorials(c.nPlayers);
 
