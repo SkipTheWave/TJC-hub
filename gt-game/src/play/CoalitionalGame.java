@@ -13,7 +13,9 @@ import java.io.FileNotFoundException;
 import java.util.*;
 
 public class CoalitionalGame {
-	public double[] v; 
+	public double[] v;
+
+	private HashMap<String, Double> valueMap;
 	public int nPlayers;
 	public String[] ids;
 
@@ -29,6 +31,10 @@ public class CoalitionalGame {
 		this.v=v; 
 		this.nPlayers = (int)(Math.log(v.length) / Math.log(2));
 		setPlayersID();
+		valueMap = new HashMap<>();
+		for (int i = 0; i < v.length; i++) {
+			valueMap.put(getSet(i).toString(), v[i]);
+		}
 	}
 	
 	public void setPlayersID() {  
@@ -110,8 +116,8 @@ public class CoalitionalGame {
 		for (int i=0;i<v.length;i++) {
 			ArrayList<Integer> set = getSet(i);
 			double sV = 0; // value of individual value
-			for(int j=0;j<set.size();j++){
-				sV += shapleyValue.get(j);//share of player j
+			for (int j : set) {
+				sV += shapleyValue.get(j);
 			}
 			if(sV < v[i]) {
 				System.out.println(sV + " < " + v[i] + " on set " + set);
@@ -178,21 +184,23 @@ public class CoalitionalGame {
 
 	public double getValue(ArrayList<Integer> set){
 
-		for(int i=0;i<v.length;i++) {
-			//System.out.println(getSet(i).toString());
-			if (set.toString().equals(getSet(i).toString())) return v[i];
-		}
+//		for(int i=0;i<v.length;i++) {
+//			//System.out.println(getSet(i).toString());
+//			if (set.toString().equals(getSet(i).toString())) return v[i];
+//		}
+//
+//		return 0.0;
 
-		return 0.0;
+		return valueMap.getOrDefault(set.toString(), 0.0);
 	}
 	
 	public void permutation(int j, int k, int iZero, long v0, CoalitionalGame coalitional, double[] factorialN){
 		long value = 0;
 
 		if (k==0) {
-			showSet(v0);
+			//showSet(v0);
 			shapley += GainsInSubSet(getSet(v0), coalitional, nPlayers - 1 - iZero, factorialN);
-			//System.out.println("\nShare of " + coalitional.ids[nPlayers - 1 - iZero] + " = " + shapleyValue);
+
 		}
 		else {
 			int op;
@@ -203,7 +211,7 @@ public class CoalitionalGame {
 					if (i != iZero) value += (long) Math.pow(2, nPlayers-(i+1));
 				}
 				v0 = v0 + value;
-				showSet(v0);
+				//showSet(v0);
 				shapley += GainsInSubSet(getSet(v0), coalitional, nPlayers - 1 - iZero, factorialN);
 				//System.out.println("\nShare of " + coalitional.ids[nPlayers - 1 - iZero] + " = " + shapleyValue);
 			}
@@ -238,31 +246,22 @@ public class CoalitionalGame {
 
 	public double GainsInSubSet(ArrayList<Integer> subSet, CoalitionalGame coalitional, int j, double[] factorialN){
 
-		double gains;
 		int s = subSet.size();
-		int n = this.nPlayers;
-		int nPlayersComplement = nPlayers - s -1;
-		double sFactorial =  factorialN[s];
-		double nFactorial = factorialN[n];
+		int nPlayersComplement = nPlayers - s - 1;
+		double sFactorial = factorialN[s];
+		double nFactorial = factorialN[nPlayers];
 		double complementFactorial = factorialN[nPlayersComplement];
 
 		double valueWithoutPlayer = coalitional.getValue(subSet);
 		subSet.add(j);
-		//Collections.reverse(subSet);
 		Collections.sort(subSet, Collections.reverseOrder());
 		double valueWithPlayer = coalitional.getValue(subSet);
-		subSet.removeAll(Arrays.asList(j));
+		subSet.remove(Integer.valueOf(j));
 		Collections.sort(subSet, Collections.reverseOrder());
-		gains = sFactorial * complementFactorial * (valueWithPlayer - valueWithoutPlayer) / nFactorial;
-
-//		BigDecimal a = new BigDecimal(gains);
-//		a = a.setScale(2, RoundingMode.HALF_UP);
-//		return a.doubleValue();
-		//double roundGains = Math.round(gains * 2) / 2.0;
-		return gains;
+		return sFactorial * complementFactorial * (valueWithPlayer - valueWithoutPlayer) / nFactorial;
 	}
 
-	public boolean isCoreEmpty() {
+	/*public boolean isCoreEmpty() {
 		int nElements = ids.length;//(int) (Math.log(v.length) / Math.log(2));
 		double[] c = new double[nElements];
 		Arrays.fill(c, 0.0);
@@ -287,27 +286,75 @@ public class CoalitionalGame {
 			}
 		}
 		lp.setLowerbound(lb);
-		showLP();
+		//showLP();
+		return solveLP();
+	}*/
+	public boolean isCoreEmpty() {
+		int nElements = ids.length;
+		double[] c = new double[nElements];
+		Arrays.fill(c, 0.0);
+		double[] b = v;
+		double[][] A = new double[v.length][nElements];
+
+		for (int i = 0; i < v.length; i++) {
+			ArrayList<Integer> set = getSet(i);
+			for (int j : set) {
+				A[i][j] = 1.0;
+			}
+		}
+
+		lp = new LinearProgram(c);
+		lp.setMinProblem(true);
+		for (int i = 0; i < b.length; i++) {
+			if (i == b.length - 1) {
+				lp.addConstraint(new LinearEqualsConstraint(A[i], b[i], "c" + i));
+			} else {
+				lp.addConstraint(new LinearBiggerThanEqualsConstraint(A[i], b[i], "c" + i));
+			}
+		}
+		lp.setLowerbound(c);
 		return solveLP();
 	}
-	
+
+
 	public static void main(String[] args) throws FileNotFoundException {
 		double[] v1 = {0.0, 0.0, 3.0, 8.0, 2.0, 7.0, 5.0, 10.0, 0.0, 0.0, 4.0, 9.0, 3.0, 8.0, 6.0, 11.0};
 		int pCounter = 0;
 		int nLines = 0;
 
 		try {
-			String pathname = "C:\\Users\\Skip\\Desktop\\The Warehouse\\UNI\\TJC\\Labs\\gt-game\\quiz4_examples\\EC2.txt";
+
+			String pathname = "C:\\Users\\pedro\\IdeaProjects\\TJC-hub\\gt-game\\quiz4_examples\\EC1.txt";
 			Scanner file = new Scanner(new File(pathname));
-			Scanner fileAux = new Scanner(new File(pathname));
 
-			while (fileAux.hasNextLine()) {
+
+			while (file.hasNextLine()) {
 				nLines++;
-				fileAux.nextLine();
+				file.nextLine();
 			}
-			fileAux.close();
 
-			// FOR GENERIC PROBLEMS (Ex 1-3) (for others, comment this)
+			double[] v2 = new double[nLines];
+			file = new Scanner(new File(pathname));
+
+
+			while (file.hasNextLine()) {
+				//System.out.println(file.nextLine());
+				v2[pCounter++] = Double.parseDouble( file.nextLine());
+				//file.nextLine();
+			}
+
+
+			//String pathname = "C:\\Users\\Skip\\Desktop\\The Warehouse\\UNI\\TJC\\Labs\\gt-game\\quiz4_examples\\EC2.txt";
+//			Scanner file = new Scanner(new File(pathname));
+//			Scanner fileAux = new Scanner(new File(pathname));
+//
+//			while (fileAux.hasNextLine()) {
+//				nLines++;
+//				fileAux.nextLine();
+//			}
+//			fileAux.close();
+//
+//			// FOR GENERIC PROBLEMS (Ex 1-3) (for others, comment this)
 //			double[] v2 = new double[nLines];
 //			while (file.hasNextLine()) {
 //				v2[pCounter++] = file.nextDouble();
@@ -315,32 +362,32 @@ public class CoalitionalGame {
 //			}
 
 			// FOR WEIGHTED VOTING PROBLEMS (Ex 4-6) (for others, comment this)
-			int numVoters = nLines - 2;
-			int[] voterWeights = new int[numVoters];
+//			int numVoters = nLines - 2;
+//			int[] voterWeights = new int[numVoters];
+//
+//			for (int i = 0; i < numVoters; i++) {
+//				voterWeights[i] = Integer.parseInt(file.nextLine());
+//			}
+//
+//			//CoalitionalGame c = new CoalitionalGame(voterWeights, voteThreshold, payoff);
+//
+//			int voteThreshold = Integer.parseInt(file.nextLine());
+//			int payoff = Integer.parseInt(file.nextLine());
+//
+//			double[] v2 = new double[(int)Math.pow(2, numVoters)];
 
-			for (int i = 0; i < numVoters; i++) {
-				voterWeights[i] = Integer.parseInt(file.nextLine());
-			}
-
-			//CoalitionalGame c = new CoalitionalGame(voterWeights, voteThreshold, payoff);
-
-			int voteThreshold = Integer.parseInt(file.nextLine());
-			int payoff = Integer.parseInt(file.nextLine());
-
-			double[] v2 = new double[(int)Math.pow(2, numVoters)];
-
-			for (int i = 0; i < v2.length; i++) {
+			//for (int i = 0; i < v2.length; i++) {
 				//if, adding up the votes of the players of this set, you pass the threshold
 				//then, v[i] == payoff
 				//else, v[i] == 0.0
-			}
+			//}
 
 			// FOR WEIGHTED GRAPH PROBLEMS (Ex. 7-9) (otherwise, comment this)
 			// ... (WIP) ...
 
-			file.close();
+			//file.close();
 
-			System.out.println(Arrays.toString(v2));
+			//System.out.println(Arrays.toString(v2));
 
 			CoalitionalGame c = new CoalitionalGame(v2);
 			//CoalitionalGame c = new CoalitionalGame(v1);
@@ -348,24 +395,25 @@ public class CoalitionalGame {
 
 			c.showGame();
 			for (int j = 0; j < c.nPlayers; j++) {
-				System.out.println("*********** Permutations without player " + c.ids[c.nPlayers - 1 - j] + " ***********");
+				//System.out.println("*********** Permutations without player " + c.ids[c.nPlayers - 1 - j] + " ***********");
 				c.shapley = 0;
 				for (int i = 0; i < c.nPlayers; i++) {
-					System.out.print("With " + i + " players: ");
+					//System.out.print("With " + i + " players: ");
 					c.permutation(0, i, j, 0, c, factorialN);
-					System.out.println();
+					//System.out.println();
 				}
-				double roundShapley = Math.round(c.shapley * 2) / 2.0;
+
+				double roundShapley = Math.round(c.shapley * 100.0) / 100.0;
 				System.out.println("\nShare of " + c.ids[c.nPlayers - 1 - j] + " = " + roundShapley);
 				c.shapleyValue.add(roundShapley);
 
 			}
-			//Collections.reverse(c.shapleyValue);
+			Collections.reverse(c.shapleyValue);
 			boolean inCore = c.isShapleyInCore();
 			if(!inCore) {
 				boolean sol = c.isCoreEmpty();
 				if(sol){
-					showSolution();
+					//showSolution();
 					System.out.println("Possible core solution: ");
 					for( int i = 0; i < c.nPlayers; i++){
 						System.out.println("Player " + c.ids[c.ids.length-i-1] + " = " + x[i]);
@@ -377,7 +425,7 @@ public class CoalitionalGame {
 				System.out.println("\nThe Shapley value is in the core");
 				System.out.println("Possible core solution: ");
 				for( int i = 0; i < c.nPlayers; i++){
-					System.out.println("Player " + c.ids[c.ids.length-i-1] + " = " + c.shapleyValue.get(i));
+					System.out.println("Player " + c.ids[c.ids.length-i-1] + " = " + c.shapleyValue.get(c.ids.length-i-1));
 				}
 			}
 
